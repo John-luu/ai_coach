@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>登录 - AI 提问教练</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .login-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 400px;
+        overflow: hidden;
+      }
+
+      .login-header {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 32px 40px;
+        text-align: center;
+      }
+
+      .login-logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .logo-mark {
+        width: 40px;
+        height: 40px;
+        background: white;
+        color: #4f46e5;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .logo-text {
+        text-align: left;
+      }
+
+      .logo-title {
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+
+      .logo-subtitle {
+        font-size: 14px;
+        opacity: 0.9;
+        font-weight: 400;
+      }
+
+      .login-body {
+        padding: 40px;
+      }
+
+      .form-group {
+        margin-bottom: 24px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      }
+
+      .form-input.error {
+        border-color: #ef4444;
+      }
+
+      .error-message {
+        color: #ef4444;
+        font-size: 14px;
+        margin-top: 4px;
+        display: none;
+      }
+
+      .form-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+      }
+
+      .remember-me {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #6b7280;
+      }
+
+      .forgot-password {
+        color: #4f46e5;
+        font-size: 14px;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .forgot-password:hover {
+        text-decoration: underline;
+      }
+
+      .btn {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: #f3f4f6;
+        color: #374151;
+        margin-top: 16px;
+      }
+
+      .btn-secondary:hover {
+        background: #e5e7eb;
+      }
+
+      .login-footer {
+        text-align: center;
+        margin-top: 32px;
+        font-size: 14px;
+        color: #6b7280;
+      }
+
+      .register-link {
+        color: #4f46e5;
+        text-decoration: none;
+        font-weight: 500;
+        margin-left: 4px;
+      }
+
+      .register-link:hover {
+        text-decoration: underline;
+      }
+
+      .alert {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+        font-size: 14px;
+        display: none;
+      }
+
+      .alert-error {
+        background: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+      }
+
+      .alert-success {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 480px) {
+        .login-body {
+          padding: 32px 24px;
+        }
+
+        .login-header {
+          padding: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-header">
+        <div class="login-logo">
+          <div class="logo-mark">Q</div>
+          <div class="logo-text">
+            <div class="logo-title">AI 提问教练</div>
+            <div class="logo-subtitle">让 AI 成为你的学习搭档</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="login-body">
+        <div id="error-alert" class="alert alert-error hidden"></div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label" for="username">用户名 / 邮箱</label>
+            <input
+              type="text"
+              id="username"
+              class="form-input"
+              placeholder="请输入用户名或邮箱"
+              required
+            />
+            <div class="error-message" id="username-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">密码</label>
+            <input
+              type="password"
+              id="password"
+              class="form-input"
+              placeholder="请输入密码"
+              required
+            />
+            <div class="error-message" id="password-error"></div>
+          </div>
+
+          <div class="form-options">
+            <label class="remember-me">
+              <input type="checkbox" id="remember" />
+              <span>记住我</span>
+            </label>
+            <a href="#" class="forgot-password">忘记密码？</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="login-btn">
+            登录
+          </button>
+
+          <button type="button" class="btn btn-secondary" id="register-btn">
+            注册新账号
+          </button>
+        </form>
+
+        <div class="login-footer">
+          还没有账号？
+          <a href="#" class="register-link" id="register-link">立即注册</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // DOM 元素
+      const loginForm = document.getElementById("login-form");
+      const usernameInput = document.getElementById("username");
+      const passwordInput = document.getElementById("password");
+      const loginBtn = document.getElementById("login-btn");
+      const registerBtn = document.getElementById("register-btn");
+      const registerLink = document.getElementById("register-link");
+      const errorAlert = document.getElementById("error-alert");
+      const rememberCheckbox = document.getElementById("remember");
+
+      // 加载保存的用户名（如果有）
+      document.addEventListener("DOMContentLoaded", () => {
+        const savedUsername = localStorage.getItem("remembered_username");
+        if (savedUsername) {
+          usernameInput.value = savedUsername;
+          rememberCheckbox.checked = true;
+        }
+      });
+
+      // 登录表单提交
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+        const remember = rememberCheckbox.checked;
+
+        // 清除之前的错误信息
+        clearErrors();
+
+        // 简单验证
+        if (!username) {
+          showError("username", "请输入用户名或邮箱");
+          return;
+        }
+
+        if (!password) {
+          showError("password", "请输入密码");
+          return;
+        }
+
+        if (password.length < 6) {
+          showError("password", "密码至少6位字符");
+          return;
+        }
+
+        // 禁用登录按钮，显示加载状态
+        loginBtn.disabled = true;
+        loginBtn.textContent = "登录中...";
+
+        try {
+          // 发送登录请求到后端
+          const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: username,
+              password: password,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            // 登录成功
+            if (remember) {
+              localStorage.setItem("remembered_username", username);
+            } else {
+              localStorage.removeItem("remembered_username");
+            }
+
+            // 存储用户信息和token（如果有）
+            if (data.token) {
+              localStorage.setItem("auth_token", data.token);
+            }
+            localStorage.setItem("current_user", JSON.stringify(data.user));
+
+            // 跳转到主页面
+            window.location.href = "/";
+          } else {
+            // 登录失败
+            showAlert(data.message || "登录失败，请重试", "error");
+            loginBtn.disabled = false;
+            loginBtn.textContent = "登录";
+          }
+        } catch (error) {
+          console.error("登录请求失败:", error);
+          showAlert("网络错误，请检查连接后重试", "error");
+          loginBtn.disabled = false;
+          loginBtn.textContent = "登录";
+        }
+      });
+
+      // 注册按钮点击（切换到注册模式）
+      function switchToRegister() {
+        document.querySelector(".logo-title").textContent = "注册账号";
+        document.querySelector(".logo-subtitle").textContent =
+          "开启你的 AI 学习之旅";
+        loginBtn.textContent = "注册";
+        registerBtn.classList.add("hidden");
+        document.querySelector(".login-footer").innerHTML = `
+                已有账号？
+                <a href="#" class="register-link" id="back-to-login">返回登录</a>
+            `;
+
+        // 添加返回登录的监听
+        document
+          .getElementById("back-to-login")
+          .addEventListener("click", (e) => {
+            e.preventDefault();
+            switchToLogin();
+          });
+      }
+
+      // 切换回登录模式
+      function switchToLogin() {
+        document.querySelector(".logo-title").textContent = "AI 提问教练";
+        document.querySelector(".logo-subtitle").textContent =
+          "让 AI 成为你的学习搭档";
+        loginBtn.textContent = "登录";
+        registerBtn.classList.remove("hidden");
+        document.querySelector(".login-footer").innerHTML = `
+                还没有账号？
+                <a href="#" class="register-link" id="register-link">立即注册</a>
+            `;
+
+        // 重新添加注册链接监听
+        document
+          .getElementById("register-link")
+          .addEventListener("click", (e) => {
+            e.preventDefault();
+            switchToRegister();
+          });
+      }
+
+      // 注册链接点击
+      registerLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        switchToRegister();
+      });
+
+      // 注册按钮点击
+      registerBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        switchToRegister();
+      });
+
+      // 显示错误提示
+      function showError(field, message) {
+        const errorElement = document.getElementById(`${field}-error`);
+        const inputElement = document.getElementById(field);
+
+        if (errorElement) {
+          errorElement.textContent = message;
+          errorElement.style.display = "block";
+        }
+
+        if (inputElement) {
+          inputElement.classList.add("error");
+        }
+      }
+
+      // 清除所有错误提示
+      function clearErrors() {
+        document.querySelectorAll(".error-message").forEach((el) => {
+          el.style.display = "none";
+        });
+
+        document.querySelectorAll(".form-input.error").forEach((el) => {
+          el.classList.remove("error");
+        });
+
+        errorAlert.classList.add("hidden");
+      }
+
+      // 显示提示信息
+      function showAlert(message, type = "error") {
+        errorAlert.textContent = message;
+        errorAlert.className = `alert alert-${type}`;
+        errorAlert.classList.remove("hidden");
+
+        // 如果是成功提示，3秒后隐藏
+        if (type === "success") {
+          setTimeout(() => {
+            errorAlert.classList.add("hidden");
+          }, 3000);
+        }
+      }
+
+      // 监听输入框变化，实时清除错误提示
+      usernameInput.addEventListener("input", () => {
+        clearErrors();
+      });
+
+      passwordInput.addEventListener("input", () => {
+        clearErrors();
+      });
+    </script>
+  </body>
+</html>

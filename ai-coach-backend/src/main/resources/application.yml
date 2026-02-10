@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+ai:
+  api:
+    # DeepSeek 接口基础地址（需要根据官方文档确认）
+    base-url: https://dashscope.aliyuncs.com/compatible-mode
+    # 在环境变量中配置 DEEPSEEK_API_KEY 更安全，这里只是占位
+    key: sk-9915ab699b7f46ccbecdea96cdd6c342
+    # DeepSeek 的模型名称，根据你实际使用的模型调整
+    model: qwen-plus
+
+spring:
+  main:
+    web-application-type: servlet

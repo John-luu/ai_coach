@@ -1,0 +1,14 @@
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/dto/SuggestionItem.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/AiCoachApplication.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/service/AssessmentService.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/dto/PhaseDto.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/controller/AssessmentController.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/dto/AssessmentResult.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/dto/ProfileDto.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/controller/SuggestionController.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/dto/PlanDto.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/service/AiClient.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/dto/AssessmentRequest.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/dto/PlanProgressDto.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/dto/SuggestionRequest.java
+/Users/user/Workspace/python_course/ai-coach-backend/src/main/java/com/example/aicoach/service/SuggestionService.java

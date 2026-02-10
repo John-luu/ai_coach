@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 提问教练式学习网页</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+  <body>
+    <div class="app-root">
+      <header class="app-header">
+        <div class="logo-area">
+          <div class="logo-mark">Q</div>
+          <div class="logo-text">
+            <div class="logo-title">AI 提问教练</div>
+            <div class="logo-subtitle">让 AI 成为你的学习搭档</div>
+          </div>
+        </div>
+        <!-- 添加用户信息区域 -->
+        <div class="user-info" id="user-info">
+          <div class="user-avatar">
+            <span id="user-initial">U</span>
+          </div>
+          <div class="user-details">
+            <div class="user-name" id="user-name">用户</div>
+            <div class="user-action" id="logout-btn">退出</div>
+          </div>
+        </div>
+      </header>
+
+      <main class="app-main">
+        <!-- 左侧：体检 & 学习计划 / 学习之旅信息 -->
+        <aside class="sidebar">
+          <section class="card intro-card" id="intro-section">
+            <h2 class="card-title">1. 开始你的学习体检</h2>
+            <p class="card-desc">
+              3～5 分钟小问卷，帮助你快速梳理学习目标、基础水平和偏好方式。
+            </p>
+          </section>
+
+          <section class="card hidden" id="assessment-summary-card">
+            <h2 class="card-title">你的 AI 学习画像</h2>
+            <div class="profile-badge">
+              <div class="profile-level">初学者 · Python</div>
+              <div class="profile-tag-row">
+                <span class="tag">目标：转行找工作</span>
+                <span class="tag">风格：引导式拆解</span>
+              </div>
+            </div>
+            <div class="profile-section">
+              <div class="section-label">当前技能判断</div>
+              <p class="section-content">
+                你已经具备少量编程基础，能看懂简单代码，但在系统性知识结构、项目实战和提问能力上仍有较大提升空间。
+              </p>
+            </div>
+            <div class="profile-section">
+              <div class="section-label">最需要补的知识类型</div>
+              <ul class="section-list">
+                <li>用项目场景来理解 Python 核心语法</li>
+                <li>掌握「提问题」的结构化表达方式</li>
+                <li>学会拆解任务，并将 AI 当作「教练」而非「答案机器」</li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="card hidden" id="plan-card">
+            <h2 class="card-title">你的专属学习计划</h2>
+
+            <div class="plan-time">
+              <span class="section-label">每日学习时间</span>
+              <div class="plan-time-value">60 分钟 / 每天</div>
+            </div>
+
+            <div class="plan-phases">
+              <div class="phase-header">
+                <span class="section-label">当前学习阶段</span>
+                <span class="phase-current-label" id="current-phase-label"
+                  >阶段一 · 了解python是什么</span
+                >
+              </div>
+              <ol class="phase-list">
+                <li class="phase-item phase-item-active">
+                  <div class="phase-title">阶段一：了解python是什么</div>
+                  <div class="phase-desc">用 1～2 句话说清楚python是什么。</div>
+                </li>
+                <li class="phase-item">
+                  <div class="phase-title">阶段二：掌握python基础语法</div>
+                  <div class="phase-desc">
+                    向 AI 简短提问：python基础语法有哪些，哪些需要重点掌握。
+                  </div>
+                </li>
+                <li class="phase-item">
+                  <div class="phase-title">阶段三：学会做些小练习题</div>
+                  <div class="phase-desc">
+                    告诉 AI 根据你掌握的知识点出几道练习题巩固。
+                  </div>
+                </li>
+                <li class="phase-item">
+                  <div class="phase-title">阶段四：用python做一个小项目</div>
+                  <div class="phase-desc">
+                    把「分散的练习题」变成「具体的小项目」。
+                  </div>
+                </li>
+                <li class="phase-item">
+                  <div class="phase-title">
+                    阶段五：目前企业级应用的项目设计
+                  </div>
+                  <div class="phase-desc">
+                    让 AI 举例Python在企业级项目中的应用。
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            <div class="plan-progress">
+              <div class="section-label">学习之旅进度</div>
+              <div class="progress-track">
+                <div class="progress-bar" id="journey-progress-bar"></div>
+              </div>
+              <div class="progress-text" id="journey-progress-text">
+                Lv.1 新手探索者 · 进度 10%
+              </div>
+            </div>
+          </section>
+        </aside>
+
+        <!-- 右侧：主内容区域 -->
+        <section class="main-content">
+          <!-- 学习能力体检向导 -->
+          <section class="card" id="assessment-card">
+            <div class="assessment-header">
+              <h2 class="card-title">学习能力体检（Demo）</h2>
+              <div class="assessment-progress">
+                <div class="progress-track small">
+                  <div
+                    class="progress-bar"
+                    id="assessment-progress-bar"
+                    style="width: 0%"
+                  ></div>
+                </div>
+                <span class="progress-label" id="assessment-progress-label"
+                  >第 1 / 5 题</span
+                >
+              </div>
+            </div>
+
+            <div class="assessment-body">
+              <div class="assessment-step active" data-step="1">
+                <div class="step-label">问题 1 / 5</div>
+                <h3 class="step-title">你现在最想用 AI 帮你学什么？</h3>
+                <p class="step-desc">
+                  比如「Python
+                  基础」「算法刷题」「写毕业设计」「做数据分析」等等。
+                </p>
+                <textarea
+                  class="input textarea"
+                  rows="3"
+                  placeholder="示例：我想系统学 Python，用来做数据分析和自动化脚本。"
+                ></textarea>
+              </div>
+
+              <div class="assessment-step" data-step="2">
+                <div class="step-label">问题 2 / 5</div>
+                <h3 class="step-title">当前阶段你的核心学习目标是什么？</h3>
+                <p class="step-desc">
+                  可以是「转行找工作」「完成具体项目」「通过考试」「提升职场竞争力」等。
+                </p>
+                <div class="option-group">
+                  <button class="chip">转行 / 找工作</button>
+                  <button class="chip">完成项目 / 课程作业</button>
+                  <button class="chip">补基础 / 理清知识体系</button>
+                  <button class="chip">兴趣学习 / 拓展视野</button>
+                </div>
+              </div>
+
+              <div class="assessment-step" data-step="3">
+                <div class="step-label">问题 3 / 5</div>
+                <h3 class="step-title">你对 它 的掌握程度，更接近哪一种？</h3>
+                <div class="option-group">
+                  <button class="chip">从零开始</button>
+                  <button class="chip">学过一点，能看懂基础示例</button>
+                  <button class="chip">
+                    能完成小作业，遇到较难问题无法解决
+                  </button>
+                  <button class="chip">能够完成较难问题</button>
+                </div>
+              </div>
+
+              <div class="assessment-step" data-step="4">
+                <div class="step-label">问题 4 / 5</div>
+                <h3 class="step-title">你更喜欢 AI 如何帮你学习？</h3>
+                <div class="option-group">
+                  <button class="chip">
+                    像老师一样一步步引导我，帮我拆解任务
+                  </button>
+                  <button class="chip">直接给我答案和代码模板</button>
+                  <button class="chip">先自己尝试，遇到卡点再让 AI 帮我</button>
+                  <button class="chip">
+                    希望 AI 像教练一样提问，逼我多思考
+                  </button>
+                </div>
+              </div>
+
+              <div class="assessment-step" data-step="5">
+                <div class="step-label">问题 5 / 5</div>
+                <h3 class="step-title">
+                  你计划中，每天能拿出多久用于专注学习？
+                </h3>
+                <input
+                  class="input"
+                  type="text"
+                  placeholder="例如：30 分钟 / 60 分钟 / 2 小时"
+                />
+              </div>
+            </div>
+
+            <div class="assessment-footer">
+              <button class="btn ghost" id="assessment-prev-btn">上一步</button>
+              <button class="btn primary" id="assessment-next-btn">
+                下一题
+              </button>
+            </div>
+          </section>
+
+          <!-- 学习之旅 & AI 提问教练 -->
+          <section class="card hidden" id="journey-card">
+            <div class="journey-header">
+              <div>
+                <h2 class="card-title">学习之旅 · AI 提问教练</h2>
+              </div>
+              <div class="journey-stage-pill">
+                当前阶段：<span id="journey-stage-label"
+                  >阶段一 · 目标说清楚</span
+                >
+              </div>
+            </div>
+
+            <div class="journey-layout">
+              <!-- 上：对话展示区 -->
+              <div class="journey-panel conversation-panel">
+                <div class="panel-header"></div>
+                <div class="chat-window" id="chat-window"></div>
+              </div>
+
+              <!-- 中：提示问题区 -->
+              <div class="journey-panel suggestion-panel">
+                <div class="panel-header">
+                  <div class="panel-title">提示问题区</div>
+                  <div class="panel-subtitle">
+                    根据您的学习画像和当前阶段，AI为您推荐的相关问题。点击即可发送。
+                  </div>
+                </div>
+
+                <!-- 添加阶段标签切换 -->
+                <div class="suggestion-stage-switch">
+                  <span class="section-label">当前学习阶段</span>
+                  <div class="stage-tabs">
+                    <button class="stage-tab stage-tab-active" data-stage="1">
+                      阶段一
+                    </button>
+                    <button class="stage-tab" data-stage="2">阶段二</button>
+                    <button class="stage-tab" data-stage="3">阶段三</button>
+                  </div>
+                </div>
+
+                <!-- 提示问题列表容器 -->
+                <div class="suggestion-list" id="suggestion-list">
+                  <!-- AI生成的提示问题会动态显示在这里 -->
+                </div>
+              </div>
+
+              <!-- 下：提问输入区 -->
+              <div class="journey-panel input-panel">
+                <div class="panel-header">
+                  <div class="panel-title">提问输入区（结构化引导）</div>
+                </div>
+
+                <div class="prompt-structure">
+                  <span class="structure-item structure-tag" data-key="goal"
+                    >学习目标</span
+                  >
+                  <span
+                    class="structure-item structure-tag"
+                    data-key="background"
+                    >背景说明</span
+                  >
+                  <span class="structure-item structure-tag" data-key="attempt"
+                    >已尝试内容</span
+                  >
+                  <span class="structure-item structure-tag" data-key="stuck"
+                    >卡住的点</span
+                  >
+                  <span class="structure-item structure-tag" data-key="format"
+                    >希望 AI 给出的结果形式</span
+                  >
+                </div>
+
+                <div class="prompt-input-area">
+                  <textarea
+                    id="prompt-input"
+                    class="input textarea"
+                    rows="4"
+                    placeholder="试着根据上方 5 个模块，把你的问题写完整。你也可以直接从上方示例问题区点击一条问题进行练习。"
+                  ></textarea>
+                  <div class="prompt-footer">
+                    <div class="prompt-actions">
+                      <button class="btn ghost" id="prompt-clear-btn">
+                        清空
+                      </button>
+                      <button class="btn primary" id="prompt-send-btn">
+                        发送
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
