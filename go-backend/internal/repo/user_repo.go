@@ -13,6 +13,7 @@ type UserStore interface {
 	FindByEmail(email string) (*models.User, error)
 	Create(username, email, password, displayName string) (*models.User, error)
 	UpdateHasAssessment(id int64, status int) error
+	UpdateStage(id int64, stage int) error
 	// 新增：保存体检记录
 	SaveAssessment(userID int64, requestJSON, resultJSON string) error
 	// 新增：获取用户最新的体检风格偏好（连表查询示例）
@@ -37,9 +38,9 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 }
 
 func (r *UserRepo) FindByUsername(username string) (*models.User, error) {
-	row := r.DB.QueryRow(`SELECT id, username, email, password, display_name, has_assessment FROM users WHERE username=?`, username)
+	row := r.DB.QueryRow(`SELECT id, username, email, password, display_name, has_assessment, stage FROM users WHERE username=?`, username)
 	var u models.User
-	if err := row.Scan(&u.ID, &u.Username, &u.Email, &u.Password, &u.DisplayName, &u.HasAssessment); err != nil {
+	if err := row.Scan(&u.ID, &u.Username, &u.Email, &u.Password, &u.DisplayName, &u.HasAssessment, &u.Stage); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
@@ -50,9 +51,9 @@ func (r *UserRepo) FindByUsername(username string) (*models.User, error) {
 }
 
 func (r *UserRepo) FindByEmail(email string) (*models.User, error) {
-	row := r.DB.QueryRow(`SELECT id, username, email, password, display_name, has_assessment FROM users WHERE email=?`, email)
+	row := r.DB.QueryRow(`SELECT id, username, email, password, display_name, has_assessment, stage FROM users WHERE email=?`, email)
 	var u models.User
-	if err := row.Scan(&u.ID, &u.Username, &u.Email, &u.Password, &u.DisplayName, &u.HasAssessment); err != nil {
+	if err := row.Scan(&u.ID, &u.Username, &u.Email, &u.Password, &u.DisplayName, &u.HasAssessment, &u.Stage); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
@@ -63,7 +64,7 @@ func (r *UserRepo) FindByEmail(email string) (*models.User, error) {
 }
 
 func (r *UserRepo) Create(username, email, password, displayName string) (*models.User, error) {
-	res, err := r.DB.Exec(`INSERT INTO users (username, email, password, display_name) VALUES (?,?,?,?)`,
+	res, err := r.DB.Exec(`INSERT INTO users (username, email, password, display_name, stage) VALUES (?,?,?,?, 1)`,
 		username, email, password, displayName)
 	if err != nil {
 		return nil, err
@@ -76,11 +77,17 @@ func (r *UserRepo) Create(username, email, password, displayName string) (*model
 		Password:      password,
 		DisplayName:   displayName,
 		HasAssessment: 0,
+		Stage:         1,
 	}, nil
 }
 
 func (r *UserRepo) UpdateHasAssessment(id int64, status int) error {
 	_, err := r.DB.Exec(`UPDATE users SET has_assessment=? WHERE id=?`, status, id)
+	return err
+}
+
+func (r *UserRepo) UpdateStage(id int64, stage int) error {
+	_, err := r.DB.Exec(`UPDATE users SET stage=? WHERE id=?`, stage, id)
 	return err
 }
 

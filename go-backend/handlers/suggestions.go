@@ -9,6 +9,8 @@ import (
 
 	"aicoach-backend-go/internal/ai"
 	"aicoach-backend-go/internal/config"
+	"aicoach-backend-go/internal/db"
+	"aicoach-backend-go/internal/repo"
 )
 
 type SuggestionRequest struct {
@@ -16,6 +18,7 @@ type SuggestionRequest struct {
 	LearningPlan  interface{} `json:"learningPlan"`
 	UserProfile   interface{} `json:"userProfile"`
 	UsedQuestions []string    `json:"usedQuestions"`
+	SessionID     string      `json:"sessionId,omitempty"`
 }
 
 type SuggestionItem struct {
@@ -42,7 +45,7 @@ func Suggestions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 使用 AI 生成建议问题
-	suggestions, err := generateSuggestionsWithAI(req)
+	suggestions, rawResp, prompt, err := generateSuggestionsWithAI(req)
 	if err != nil {
 		log.Printf("[Suggestions] AI generation failed: %v, falling back to defaults", err)
 		// 降级到默认建议
@@ -54,6 +57,26 @@ func Suggestions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 如果请求中包含 sessionId，则尝试将用户 prompt 与 AI 回复保存到 messages 表
+	if req.SessionID != "" {
+		cfg := config.Load()
+		sqlDB, dberr := db.Connect(cfg.DBUser, cfg.DBPass, cfg.DBUrl)
+		if dberr != nil || sqlDB == nil {
+			log.Printf("[Suggestions] DB connect error: %v", dberr)
+		} else {
+			chatRepo := repo.NewChatRepo(sqlDB)
+			cnt, _ := chatRepo.GetMessageCount(req.SessionID)
+			_, uerr := chatRepo.AddMessage(req.SessionID, "user", prompt, cnt+1)
+			if uerr != nil {
+				log.Printf("[Suggestions] Failed to save user prompt: %v", uerr)
+			}
+			_, aerr := chatRepo.AddMessage(req.SessionID, "ai", rawResp, cnt+2)
+			if aerr != nil {
+				log.Printf("[Suggestions] Failed to save AI response: %v", aerr)
+			}
+		}
+	}
+
 	WriteJSON(w, map[string]interface{}{
 		"success":     true,
 		"suggestions": suggestions,
@@ -61,7 +84,7 @@ func Suggestions(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func generateSuggestionsWithAI(req SuggestionRequest) ([]SuggestionItem, error) {
+func generateSuggestionsWithAI(req SuggestionRequest) ([]SuggestionItem, string, string, error) {
 	cfg := config.Load()
 	aiClient := ai.New(
 		cfg.AIBaseURL,
@@ -119,12 +142,12 @@ func generateSuggestionsWithAI(req SuggestionRequest) ([]SuggestionItem, error) 
 	response, err := aiClient.Chat(messages)
 	if err != nil {
 		log.Printf("[Suggestions] AI Chat failed: %v", err)
-		return nil, err
+		return nil, "", "", err
 	}
 
 	// 解析 AI 返回的问题列表
 	suggestions := parseSuggestions(response, req.Stage)
-	return suggestions, nil
+	return suggestions, response, prompt, nil
 }
 
 func parseSuggestions(response string, stage int) []SuggestionItem {

@@ -67,6 +67,7 @@ func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 			"username":      u.Username,
 			"displayName":   u.DisplayName,
 			"hasAssessment": u.HasAssessment,
+			"stage":         u.Stage,
 		},
 	})
 }
@@ -109,13 +110,24 @@ func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	_, err = h.Repo.Create(req.Username, req.Email, string(hashed), req.Username)
+	u, err := h.Repo.Create(req.Username, req.Email, string(hashed), req.Username)
 	if err != nil {
 		log.Printf("注册失败详情: %v", err)
 		WriteJSON(w, map[string]interface{}{"success": false, "message": "注册失败: " + err.Error()})
 		return
 	}
-	WriteJSON(w, map[string]interface{}{"success": true, "message": "注册成功"})
+	token, _ := h.Signer.Generate(u.Username)
+	WriteJSON(w, map[string]interface{}{
+		"success": true,
+		"message": "注册成功",
+		"token":   token,
+		"user": map[string]interface{}{
+			"username":      u.Username,
+			"displayName":   u.DisplayName,
+			"hasAssessment": u.HasAssessment,
+			"stage":         u.Stage,
+		},
+	})
 }
 
 func (h *AuthHandlers) ValidateToken(w http.ResponseWriter, r *http.Request) {

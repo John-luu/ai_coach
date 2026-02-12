@@ -2,6 +2,7 @@ export type User = {
   username: string;
   displayName?: string;
   hasAssessment?: number;
+  stage?: number;
 };
 export type LoginResponse = {
   success: boolean;
@@ -21,6 +22,24 @@ export type ChatResponse = {
   success: boolean;
   answer?: string;
   message?: string;
+  userMsg?: ChatMessage;
+  aiMsg?: ChatMessage;
+};
+
+export type ChatSession = {
+  id: string;
+  userId: number;
+  title: string;
+  createdAt: string;
+};
+
+export type ChatMessage = {
+  id: number;
+  sessionId: string;
+  role: "user" | "ai";
+  content: string;
+  sequence: number;
+  createdAt: string;
 };
 
 export type AssessmentResult = {
@@ -134,6 +153,7 @@ export async function evaluateAssessment(answers: {
 
 export async function chat(payload: {
   question: string;
+  sessionId: string;
   stage: number;
   preferredStyle?: string;
   userProfile?: unknown;
@@ -143,6 +163,85 @@ export async function chat(payload: {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
+  });
+  return resp.json();
+}
+
+export async function createSession(): Promise<{
+  success: boolean;
+  session?: ChatSession;
+  message?: string;
+}> {
+  const resp = await fetch("/api/chat/session", {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  return resp.json();
+}
+
+export async function getSessions(): Promise<{
+  success: boolean;
+  sessions?: ChatSession[];
+  message?: string;
+}> {
+  const resp = await fetch("/api/chat/sessions", {
+    headers: getAuthHeaders(),
+  });
+  return resp.json();
+}
+
+export async function getSessionMessages(
+  sessionId: string,
+): Promise<{ success: boolean; messages?: ChatMessage[]; message?: string }> {
+  const resp = await fetch(`/api/chat/messages?sessionId=${sessionId}`, {
+    headers: getAuthHeaders(),
+  });
+  return resp.json();
+}
+
+// 跨阶测试
+export type CrossStageQuestion = {
+  id: string;
+  question: string;
+  type: "short" | "choice";
+  options?: string[];
+};
+
+export type CrossStageGenerateResponse = {
+  success: boolean;
+  questions?: CrossStageQuestion[];
+  message?: string;
+};
+
+export type CrossStageSubmitResponse = {
+  success: boolean;
+  score?: number;
+  passed?: boolean;
+  message?: string;
+};
+
+export async function crossStageGenerateQuestions(
+  stage: number,
+  learningPlan?: unknown,
+  userProfile?: unknown,
+): Promise<CrossStageGenerateResponse> {
+  const resp = await fetch("/api/cross-stage/generate", {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ stage, learningPlan, userProfile }),
+  });
+  return resp.json();
+}
+
+export async function crossStageSubmitTest(
+  stage: number,
+  questions: CrossStageQuestion[],
+  answers: Record<string, string>,
+): Promise<CrossStageSubmitResponse> {
+  const resp = await fetch("/api/cross-stage/submit", {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ stage, questions, answers }),
   });
   return resp.json();
 }

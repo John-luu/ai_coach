@@ -39,6 +39,7 @@ func (r *MemoryUserRepo) Create(username, email, password, displayName string) (
 		Password:      password,
 		DisplayName:   displayName,
 		HasAssessment: 0,
+		Stage:         1,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
@@ -50,6 +51,16 @@ func (r *MemoryUserRepo) UpdateHasAssessment(id int64, status int) error {
 	for _, u := range r.users {
 		if u.ID == id {
 			u.HasAssessment = status
+			return nil
+		}
+	}
+	return nil
+}
+
+func (r *MemoryUserRepo) UpdateStage(id int64, stage int) error {
+	for _, u := range r.users {
+		if u.ID == id {
+			u.Stage = stage
 			return nil
 		}
 	}

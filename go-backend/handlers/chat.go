@@ -13,6 +13,7 @@ import (
 )
 
 type ChatRequest struct {
+	SessionID    string `json:"sessionId"`
 	Question     string `json:"question"`
 	Stage        int    `json:"stage"`
 	UserProfile  any    `json:"userProfile"`
@@ -20,13 +21,77 @@ type ChatRequest struct {
 }
 
 type ChatHandler struct {
-	AI     *ai.Client
-	Repo   repo.UserStore
-	Signer *auth.TokenSigner
+	AI        *ai.Client
+	Repo      repo.UserStore
+	ChatStore repo.ChatStore
+	Signer    *auth.TokenSigner
 }
 
-func NewChatHandler(aiClient *ai.Client, r repo.UserStore, s *auth.TokenSigner) *ChatHandler {
-	return &ChatHandler{AI: aiClient, Repo: r, Signer: s}
+func NewChatHandler(aiClient *ai.Client, r repo.UserStore, cs repo.ChatStore, s *auth.TokenSigner) *ChatHandler {
+	return &ChatHandler{AI: aiClient, Repo: r, ChatStore: cs, Signer: s}
+}
+
+func (h *ChatHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	username, err := h.Signer.ParseUsername(tokenStr)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	u, _ := h.Repo.FindByUsername(username)
+	if u == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	session, err := h.ChatStore.CreateSession(u.ID, "新会话")
+	if err != nil {
+		WriteJSON(w, map[string]any{"success": false, "message": err.Error()})
+		return
+	}
+	WriteJSON(w, map[string]any{"success": true, "session": session})
+}
+
+func (h *ChatHandler) GetSessions(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	username, err := h.Signer.ParseUsername(tokenStr)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	u, _ := h.Repo.FindByUsername(username)
+	if u == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	sessions, err := h.ChatStore.GetSessionsByUserID(u.ID)
+	if err != nil {
+		WriteJSON(w, map[string]any{"success": false, "message": err.Error()})
+		return
+	}
+	WriteJSON(w, map[string]any{"success": true, "sessions": sessions})
+}
+
+func (h *ChatHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
+	sessionID := r.URL.Query().Get("sessionId")
+	if sessionID == "" {
+		http.Error(w, "sessionId required", http.StatusBadRequest)
+		return
+	}
+
+	messages, err := h.ChatStore.GetMessagesBySessionID(sessionID)
+	if err != nil {
+		WriteJSON(w, map[string]any{"success": false, "message": err.Error()})
+		return
+	}
+	WriteJSON(w, map[string]any{"success": true, "messages": messages})
 }
 
 func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
@@ -88,13 +153,50 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 		systemPrompt += fmt.Sprintf("\n用户当前画像信息：%s", string(profileJSON))
 	}
 
-	messages := []ai.ChatMessage{
-		{Role: "system", Content: systemPrompt},
-		{Role: "user", Content: req.Question},
+	// Session management
+	var sessionID = req.SessionID
+	if sessionID == "" {
+		// If no sessionId, we might need to create one, but usually frontend should handle this
+		// For now, let's assume sessionId is required or handled by frontend
+		http.Error(w, "sessionId required", http.StatusBadRequest)
+		return
 	}
 
-	answer, err := h.AI.Chat(messages)
+	// Check message count limit (50 pairs = 100 messages)
+	count, _ := h.ChatStore.GetMessageCount(sessionID)
+	if count >= 100 {
+		WriteJSON(w, map[string]any{
+			"success": false,
+			"message": "会话已达到最大对话数限制（50次对话），请开启新会话。",
+		})
+		return
+	}
+
+	// Get history messages for context
+	history, _ := h.ChatStore.GetMessagesBySessionID(sessionID)
+	aiMessages := []ai.ChatMessage{
+		{Role: "system", Content: systemPrompt},
+	}
+	for _, m := range history {
+		aiMessages = append(aiMessages, ai.ChatMessage{Role: m.Role, Content: m.Content})
+	}
+	aiMessages = append(aiMessages, ai.ChatMessage{Role: "user", Content: req.Question})
+
+	// Add user message to DB
+	userMsg, err := h.ChatStore.AddMessage(sessionID, "user", req.Question, count+1)
 	if err != nil {
+		log.Printf("[Chat] Failed to store user message: %v", err)
+	}
+
+	// Update session title if it's the first message
+	if count == 0 {
+		title := generateTitle(req.Question)
+		h.ChatStore.UpdateSessionTitle(sessionID, title)
+	}
+
+	answer, err := h.AI.Chat(aiMessages)
+	if err != nil {
+		log.Printf("[Chat] AI error for session %s: %v", sessionID, err)
 		WriteJSON(w, map[string]any{
 			"success": false,
 			"message": "AI 响应失败：" + err.Error(),
@@ -102,8 +204,65 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add AI message to DB - fetch count again to ensure correct sequence
+	currentCount, _ := h.ChatStore.GetMessageCount(sessionID)
+	aiMsg, err := h.ChatStore.AddMessage(sessionID, "ai", answer, currentCount+1)
+	if err != nil {
+		log.Printf("[Chat] Failed to store AI message for session %s: %v", sessionID, err)
+	}
+
 	WriteJSON(w, map[string]any{
 		"success": true,
 		"answer":  answer,
+		"userMsg": userMsg,
+		"aiMsg":   aiMsg,
 	})
+}
+
+func generateTitle(text string) string {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return "新会话"
+	}
+
+	// 规则 3: 如果是图片/文件（假设前端传来的文本包含特定标记）
+	if strings.HasPrefix(text, "[图片]") {
+		return "[图片]"
+	}
+	if strings.HasPrefix(text, "[文件]") {
+		return "[文件]"
+	}
+
+	// 规则 4: 纯表情/符号
+	// 这里简单处理：如果全是 emoji，保留前4个
+	if isAllEmoji(text) {
+		runes := []rune(text)
+		if len(runes) > 4 {
+			return string(runes[:4])
+		}
+		return text
+	}
+
+	// 规则 1 & 5: 截取前8个字符
+	runes := []rune(text)
+	if len(runes) > 8 {
+		return string(runes[:8])
+	}
+	return text
+}
+
+func isAllEmoji(s string) bool {
+	for _, r := range s {
+		// 简单的 Emoji 范围判断
+		if !((r >= 0x1F600 && r <= 0x1F64F) || // Emoticons
+			(r >= 0x1F300 && r <= 0x1F5FF) || // Misc Symbols and Pictographs
+			(r >= 0x1F680 && r <= 0x1F6FF) || // Transport and Map
+			(r >= 0x2600 && r <= 0x26FF) || // Misc Symbols
+			(r >= 0x2700 && r <= 0x27BF) || // Dingbats
+			(r >= 0x1F900 && r <= 0x1F9FF) || // Supplemental Symbols and Pictographs
+			(r >= 0x1F1E6 && r <= 0x1F1FF)) { // Flags
+			return false
+		}
+	}
+	return true
 }
