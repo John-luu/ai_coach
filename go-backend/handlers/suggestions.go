@@ -69,22 +69,27 @@ func generateSuggestionsWithAI(req SuggestionRequest) ([]SuggestionItem, error) 
 		cfg.AIModel,
 	)
 
-	stageDescription := getStageDescription(req.Stage)
-	usedQuestionsStr := strings.Join(req.UsedQuestions, "\n- ")
-	if usedQuestionsStr != "" {
-		usedQuestionsStr = "\n已经提过的问题（请避免重复）：\n- " + usedQuestionsStr
+	// 将学习计划和用户画像序列化为 JSON 字符串，以便在 prompt 中使用
+	profileJSON, _ := json.Marshal(req.UserProfile)
+	planJSON, _ := json.Marshal(req.LearningPlan)
+
+	stageDesc := getStageDescription(req.Stage)
+
+	usedQuestionsStr := ""
+	if len(req.UsedQuestions) > 0 {
+		usedQuestionsStr = "\n已经提过的问题（请避免重复）：\n- " + strings.Join(req.UsedQuestions, "\n- ")
 	}
 
 	prompt := fmt.Sprintf(`你是一个优秀的 AI 学习教练。根据用户的学习情况，为用户在%s生成5个最相关、最实用的学习问题。
 
 【用户学习画像】
-%v
+%s
 
 【当前学习阶段】
 %s
 
 【学习计划】
-%v
+%s
 %s
 
 【要求】
@@ -102,7 +107,7 @@ func generateSuggestionsWithAI(req SuggestionRequest) ([]SuggestionItem, error) 
 题目: 内容
 题目: 内容
 
-请直接输出5个问题，不要添加任何其他说明。`, stageDescription, req.UserProfile, stageDescription, req.LearningPlan, usedQuestionsStr)
+请直接输出5个问题，不要添加任何其他说明。`, stageDesc, string(profileJSON), stageDesc, string(planJSON), usedQuestionsStr)
 
 	messages := []ai.ChatMessage{
 		{
@@ -118,11 +123,11 @@ func generateSuggestionsWithAI(req SuggestionRequest) ([]SuggestionItem, error) 
 	}
 
 	// 解析 AI 返回的问题列表
-	suggestions := parseSuggestions(response)
+	suggestions := parseSuggestions(response, req.Stage)
 	return suggestions, nil
 }
 
-func parseSuggestions(response string) []SuggestionItem {
+func parseSuggestions(response string, stage int) []SuggestionItem {
 	lines := strings.Split(response, "\n")
 	var suggestions []SuggestionItem
 
@@ -172,60 +177,24 @@ func parseSuggestions(response string) []SuggestionItem {
 		}
 	}
 
-	// 如果解析出的问题少于 5 个，填充默认问题
-	if len(suggestions) < 5 {
-		defaults := defaultSuggestions(1)
-		for i := len(suggestions); i < 5 && i < len(defaults); i++ {
-			suggestions = append(suggestions, SuggestionItem{
-				Title: defaults[i].Title,
-				Text:  defaults[i].Text,
-			})
-		}
-	}
-
-	return suggestions[:5]
+	// 如果解析出的问题少于 5 个，直接返回已有的（不填充默认问题）
+	return suggestions
 }
 
 func getStageDescription(stage int) string {
 	switch stage {
 	case 1:
-		return "Python 基础与入门"
+		return "阶段一"
 	case 2:
-		return "Python 进阶与应用"
+		return "阶段二"
 	case 3:
-		return "Python 项目实战"
+		return "阶段三"
 	default:
-		return "Python 学习"
+		return "阶段一"
 	}
 }
 
 func defaultSuggestions(stage int) []SuggestionItem {
-	switch stage {
-	case 1:
-		return []SuggestionItem{
-			{Title: "Python是什么？", Text: "用简单语言解释Python是什么及主要特点。"},
-			{Title: "Python能做什么？", Text: "举例说明Python在实际应用中的用途。"},
-			{Title: "学习Python需要什么基础？", Text: "入门需要的基础知识。"},
-			{Title: "如何安装Python？", Text: "在我的系统上安装Python的步骤。"},
-			{Title: "第一个Python程序", Text: "如何写出第一个Hello World程序。"},
-		}
-	case 2:
-		return []SuggestionItem{
-			{Title: "Python基础语法有哪些？", Text: "最基础、最重要的语法知识点。"},
-			{Title: "如何使用数据结构？", Text: "列表、字典、集合等数据结构的使用场景。"},
-			{Title: "函数有什么作用？", Text: "函数的定义、调用和参数传递。"},
-			{Title: "模块和包是什么？", Text: "如何组织代码到模块和包中。"},
-			{Title: "异常处理怎么做？", Text: "如何使用try-except处理错误。"},
-		}
-	case 3:
-		return []SuggestionItem{
-			{Title: "如何制定学习计划？", Text: "结合目标与时间制定计划。"},
-			{Title: "如何结构化提问？", Text: "按目标、背景、尝试、卡点、输出格式组织。"},
-			{Title: "项目架构怎样设计？", Text: "Web项目的标准架构和最佳实践。"},
-			{Title: "如何调试代码？", Text: "使用调试工具和日志来定位问题。"},
-			{Title: "代码质量如何保证？", Text: "单元测试、代码审查和CI/CD流程。"},
-		}
-	default:
-		return defaultSuggestions(1)
-	}
+	// 返回空数组，表示暂无提示问题
+	return []SuggestionItem{}
 }
