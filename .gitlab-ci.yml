@@ -35,7 +35,7 @@ build_backend:
     - export GOPROXY=$GOPROXY
     - export GOSUMDB=$GOSUMDB
     - go mod download
-    - go build -o aistudy-backend main.go
+    - go build -o aistudy-backend .
   artifacts:
     paths:
       - $BACKEND_DIR/aistudy-backend
