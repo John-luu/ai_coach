@@ -16,7 +16,7 @@ variables:
 build_frontend:
   stage: build
   tags:
-    - "master"
+    - "dev"
   script:
     - cd $FRONTEND_DIR
     - npm install
@@ -29,7 +29,7 @@ build_frontend:
 build_backend:
   stage: build
   tags:
-    - "master"
+    - "dev"
   script:
     - cd $BACKEND_DIR
     - export GOPROXY=$GOPROXY
@@ -44,7 +44,7 @@ build_backend:
 deploy:
   stage: deploy
   tags:
-    - "master"
+    - "dev"
   dependencies:
     - build_frontend
     - build_backend
