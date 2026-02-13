@@ -56,8 +56,9 @@ func initSchema(db *sql.DB) error {
 		return err
 	}
 
-	// Add stage column if it doesn't exist (in case table was created earlier)
+	// Add stage and has_assessment columns if they don't exist (in case table was created earlier)
 	_, _ = db.Exec(`ALTER TABLE users ADD COLUMN stage INT DEFAULT 1`)
+	_, _ = db.Exec(`ALTER TABLE users ADD COLUMN has_assessment TINYINT DEFAULT 0`)
 
 	// Create sessions table
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS sessions (

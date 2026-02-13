@@ -77,15 +77,25 @@ func (h *AssessmentHandler) GetLatest(w http.ResponseWriter, r *http.Request) {
 
 	_, resultJSON, err := h.Repo.GetLatestAssessment(u.ID)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			http.Error(w, "no assessment found", http.StatusNotFound)
+			return
+		}
 		log.Printf("[Assessment] GetLatest error: %v", err)
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
+	if resultJSON == "" {
+		log.Printf("[Assessment] User %d has assessment record but result_json is empty", u.ID)
+		http.Error(w, "empty assessment result", http.StatusInternalServerError)
+		return
+	}
+
 	var res AssessmentResult
 	if err := json.Unmarshal([]byte(resultJSON), &res); err != nil {
-		log.Printf("[Assessment] Unmarshal latest result error: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		log.Printf("[Assessment] Unmarshal latest result error: %v, Raw content: %s", err, resultJSON)
+		http.Error(w, "internal error: invalid data format in database", http.StatusInternalServerError)
 		return
 	}
 
