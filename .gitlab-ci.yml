@@ -23,7 +23,7 @@ build_frontend:
     - npm run build
   artifacts:
     paths:
-      - $FRONTEND_DIR/build/
+      - $FRONTEND_DIR/dist/
     expire_in: 1 hour
 
 build_backend:
@@ -35,10 +35,10 @@ build_backend:
     - export GOPROXY=$GOPROXY
     - export GOSUMDB=$GOSUMDB
     - go mod download
-    - go build -o aistudy-backend .
+    - go build -o ai_course .
   artifacts:
     paths:
-      - $BACKEND_DIR/aistudy-backend
+      - $BACKEND_DIR/ai_course
     expire_in: 1 hour
 
 deploy:
@@ -55,9 +55,10 @@ deploy:
     - rsync -az --delete $FRONTEND_DIR/dist/ $DEPLOY_SERVER:$DEPLOY_PATH/web/
 
     # 再上传后端
-    - rsync -az $BACKEND_DIR/aistudy-backend $DEPLOY_SERVER:$DEPLOY_PATH/backend/
+    - rsync -az $BACKEND_DIR/ai_course $DEPLOY_SERVER:$DEPLOY_PATH/backend/
 
-    # 再启动
-    - ssh $DEPLOY_SERVER "$DEPLOY_PATH/backend/deploy.sh restart"
-
+    # 杀进程
+    - ssh $DEPLOY_SERVER "fuser -k 8093/tcp || true"
+    # 启动
+    - ssh $DEPLOY_SERVER "nohup $DEPLOY_PATH/backend/aistudy-backend > output.log 2>&1 &"
     - echo "部署完成"
