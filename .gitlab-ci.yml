@@ -1,0 +1,63 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DEPLOY_SERVER: "cz@192.168.0.108"
+  DEPLOY_PATH: "/data/aistudy"
+  FRONTEND_DIR: "react-frontend"
+  BACKEND_DIR: "go-backend"
+
+  GOPROXY: "https://goproxy.cn,direct"
+  GOSUMDB: "sum.golang.google.cn"
+
+  # CI: "false"
+
+build_frontend:
+  stage: build
+  tags:
+    - "master"
+  script:
+    - cd $FRONTEND_DIR
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - $FRONTEND_DIR/build/
+    expire_in: 1 hour
+
+build_backend:
+  stage: build
+  tags:
+    - "master"
+  script:
+    - cd $BACKEND_DIR
+    - export GOPROXY=$GOPROXY
+    - export GOSUMDB=$GOSUMDB
+    - go mod download
+    - go build -o aistudy-backend main.go
+  artifacts:
+    paths:
+      - $BACKEND_DIR/aistudy-backend
+    expire_in: 1 hour
+
+deploy:
+  stage: deploy
+  tags:
+    - "master"
+  dependencies:
+    - build_frontend
+    - build_backend
+  script:
+    - ssh $DEPLOY_SERVER "mkdir -p $DEPLOY_PATH/web $DEPLOY_PATH/backend"
+
+    # 部署前端
+    - rsync -az --delete $FRONTEND_DIR/dist/ $DEPLOY_SERVER:$DEPLOY_PATH/web/
+
+    # 再上传后端
+    - rsync -az $BACKEND_DIR/aistudy-backend $DEPLOY_SERVER:$DEPLOY_PATH/backend/
+
+    # 再启动
+    - ssh $DEPLOY_SERVER "$DEPLOY_PATH/backend/deploy.sh restart"
+
+    - echo "部署完成"
