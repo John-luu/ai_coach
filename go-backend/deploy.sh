@@ -5,10 +5,10 @@
 
 # 配置
 APP_NAME="ai_course"
-APP_PATH="/data/ai_course/backend"
-APP_BIN="$APP_PATH/$APP_NAME"
-PID_FILE="$APP_PATH/$APP_NAME.pid"
-LOG_FILE="$APP_PATH/$APP_NAME.log"
+APP_PATH="/data/ai_course"
+APP_BIN="$APP_PATH/backend/$APP_NAME"
+PID_FILE="$APP_PATH/backend/$APP_NAME.pid"
+LOG_FILE="$APP_PATH/backend/$APP_NAME.log"
 
 # 颜色输出
 RED='\033[0;31m'
@@ -72,7 +72,7 @@ start() {
     
     check_app
     
-    cd "$APP_PATH"
+    cd "$APP_PATH/backend"
     
     # 启动应用，将输出重定向到日志文件
     nohup "$APP_BIN" >> "$LOG_FILE" 2>&1 &
