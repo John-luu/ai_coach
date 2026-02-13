@@ -179,8 +179,11 @@ func (h *AssessmentHandler) Evaluate(w http.ResponseWriter, r *http.Request) {
 
 func (h *AssessmentHandler) saveAndWriteResult(w http.ResponseWriter, userID int64, req AssessmentRequest, res AssessmentResult) {
 	// 1. 保存体检全量记录
-	reqBytes, _ := json.Marshal(req)
-	resBytes, _ := json.Marshal(res)
+	reqBytes, err1 := json.Marshal(req)
+	resBytes, err2 := json.Marshal(res)
+	if err1 != nil || err2 != nil {
+		log.Printf("[Assessment] Marshal error during save: reqErr=%v, resErr=%v", err1, err2)
+	}
 	_ = h.Repo.SaveAssessment(userID, string(reqBytes), string(resBytes))
 
 	// 2. 同步到画像表
