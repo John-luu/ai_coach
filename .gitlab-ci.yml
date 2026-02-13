@@ -60,5 +60,5 @@ deploy:
     # 杀进程
     - ssh $DEPLOY_SERVER "fuser -k 8093/tcp || true"
     # 启动
-    - ssh $DEPLOY_SERVER "nohup $DEPLOY_PATH/backend/aistudy-backend > output.log 2>&1 &"
+    - ssh $DEPLOY_SERVER "nohup $DEPLOY_PATH/backend/ai_course > output.log 2>&1 &"
     - echo "部署完成"
