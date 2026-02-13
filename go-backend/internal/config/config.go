@@ -26,7 +26,7 @@ func Load() *Config {
 		AIKey:      getEnv("AI_COACH_AI_KEY", "sk-9915ab699b7f46ccbecdea96cdd6c342"),
 		AIModel:    getEnv("AI_COACH_AI_MODEL", "qwen-plus"),
 		JWTSecret:  getEnv("AI_COACH_JWT_SECRET", "ai-coach-jwt-secret-key-2024-strong-password"),
-		JWTExpirationMillis: 86400000,
+		JWTExpirationMillis: 10800000, // 3 hours (3 * 3600 * 1000)
 	}
 }
 

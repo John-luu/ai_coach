@@ -112,15 +112,42 @@ export default function CrossStageTest({
 
   return (
     <>
-      <div
-        className={`cross-stage-fab ${!canTakeTest ? "cross-stage-fab-disabled" : ""}`}
-        onClick={canTakeTest ? handleOpen : undefined}
-        title="跨阶测试"
-        role="button"
-        aria-label="跨阶测试"
+      {/* 社区悬浮球 */}
+      <a
+        href="https://memos.3geyue.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fab-item community-fab"
+        style={{ top: "calc(50% - 140px)" }}
       >
-        <span className="cross-stage-fab-icon">⚡</span>
-        <span className="cross-stage-fab-tooltip">跨阶测试</span>
+        <span className="fab-icon">🏮</span>
+        <div className="fab-tooltip">社区交流</div>
+      </a>
+
+      {/* 跨阶测试悬浮球 */}
+      <div
+        className={`fab-item cross-stage-fab ${!canTakeTest ? "fab-disabled" : ""}`}
+        onClick={handleOpen}
+        style={{ top: "calc(50% - 70px)" }}
+      >
+        <span className="fab-icon">🧧</span>
+        <div className="fab-tooltip">
+          {currentStage >= 3
+            ? "学成归来"
+            : unlockedStage > currentStage
+              ? "挑战成功"
+              : `开启 ${nextStage} 阶挑战`}
+        </div>
+      </div>
+
+      {/* 沙箱悬浮球 */}
+      <div
+        className="fab-item sandbox-fab"
+        onClick={() => window.open("/sandbox", "_blank")}
+        style={{ top: "50%" }}
+      >
+        <span className="fab-icon">🧨</span>
+        <div className="fab-tooltip">代码实验室</div>
       </div>
 
       {visible && (
@@ -128,11 +155,6 @@ export default function CrossStageTest({
           <div
             className="cross-stage-modal"
             onClick={(e) => e.stopPropagation()}
-            style={{
-              position: "absolute",
-              bottom: "calc(50% - 26px)", // 底部与按钮底部齐平 (按钮在 50% 处，高 52px，底部在 50%+26px？不，如果使用 bottom，则 50% 是中心，50%-26px 是底部)
-              right: "94px", // 28px(按钮右边距) + 52px(按钮宽) + 14px(间距) = 94px
-            }}
           >
             <div className="cross-stage-modal-header">
               <h3>

@@ -15,6 +15,7 @@ import {
   getSessions,
   createSession,
   getSessionMessages,
+  getGreeting,
 } from "../../services/api";
 import { logout as doLogout } from "../../modules/auth";
 import CrossStageTest from "../../components/CrossStageTest";
@@ -62,6 +63,9 @@ export default function JourneyPage() {
     right: 0,
     left: "auto",
   });
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const [greeting, setGreeting] = useState("今天学什么？一起吧");
 
   const fetchSessions = useCallback(async () => {
     setIsSessionsLoading(true);
@@ -80,6 +84,14 @@ export default function JourneyPage() {
       setIsSessionsLoading(false);
     }
   }, [currentSessionId]);
+
+  useEffect(() => {
+    getGreeting().then((res) => {
+      if (res.success && res.greeting) {
+        setGreeting(res.greeting);
+      }
+    });
+  }, []);
 
   const handleSwitchSession = async (sessionId: string) => {
     setCurrentSessionId(sessionId);
@@ -214,22 +226,40 @@ export default function JourneyPage() {
   }, []);
 
   useEffect(() => {
-    if (!suggestionPopoverOpen) return;
     const onClickOutside = (e: MouseEvent) => {
-      const wrapper = suggestionTriggerRef.current;
-      const popover = document.querySelector(".suggestion-popover");
-      if (
-        wrapper &&
-        !wrapper.contains(e.target as Node) &&
-        popover &&
-        !popover.contains(e.target as Node)
-      ) {
-        closeSuggestionPopover();
+      // Handle suggestion popover
+      if (suggestionPopoverOpen) {
+        const wrapper = suggestionTriggerRef.current;
+        const popover = document.querySelector(".suggestion-popover");
+        if (
+          wrapper &&
+          !wrapper.contains(e.target as Node) &&
+          popover &&
+          !popover.contains(e.target as Node)
+        ) {
+          closeSuggestionPopover();
+        }
+      }
+
+      // Handle user menu
+      if (isUserMenuOpen) {
+        if (
+          userMenuRef.current &&
+          !userMenuRef.current.contains(e.target as Node)
+        ) {
+          setIsUserMenuOpen(false);
+        }
       }
     };
+
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [suggestionPopoverOpen, closeSuggestionPopover]);
+  }, [
+    suggestionPopoverOpen,
+    closeSuggestionPopover,
+    isUserMenuOpen,
+    setIsUserMenuOpen,
+  ]);
 
   const handleLogout = () => {
     doLogout();
@@ -620,15 +650,26 @@ export default function JourneyPage() {
 
           <div className="sidebar-footer">
             {!isSidebarCollapsed && (
-              <div className="journey-stage-pill">
-                当前阶段：
-                <span>
-                  {assessmentResult.plan?.phases?.[stage - 1]?.title ??
-                    `阶段${stage === 1 ? "一" : stage === 2 ? "二" : "三"}`}
-                </span>
+              <div className="journey-stage-container">
+                <div className="journey-stage-pill">
+                  当前阶段：
+                  <span>
+                    {assessmentResult.plan?.phases?.[stage - 1]?.title ??
+                      `阶段${stage === 1 ? "一" : stage === 2 ? "二" : "三"}`}
+                  </span>
+                </div>
+                <div className="stage-progress-bar">
+                  <div
+                    className="stage-progress-fill"
+                    style={{ width: `${(stage / 3) * 100}%` }}
+                  ></div>
+                </div>
+                <div className="stage-progress-text">
+                  已完成 {Math.round((stage / 3) * 100)}%
+                </div>
               </div>
             )}
-            <div className="user-info">
+            <div className="user-info" ref={userMenuRef}>
               <div className="user-avatar">
                 <span>{initial}</span>
               </div>
@@ -636,9 +677,29 @@ export default function JourneyPage() {
                 <div className="user-name">
                   {user.displayName || user.username || "用户"}
                 </div>
-                <button className="user-action" onClick={handleLogout}>
-                  退出
-                </button>
+                <div className="user-menu-wrapper">
+                  <button
+                    className="user-action"
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  >
+                    管理账户
+                  </button>
+                  {isUserMenuOpen && (
+                    <div className="user-dropdown-menu">
+                      <div className="menu-item">账户设置</div>
+                      <div
+                        className="menu-item"
+                        onClick={() => navigate("/learning-report")}
+                      >
+                        学习报告
+                      </div>
+                      <div className="menu-item">帮助与反馈</div>
+                      <div className="menu-item logout" onClick={handleLogout}>
+                        退出登录
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -658,7 +719,7 @@ export default function JourneyPage() {
                         className={`chat-message ${msg.role === "ai" ? "ai" : "user"}`}
                       >
                         <div className={`avatar ${msg.role}`}>
-                          {msg.role === "ai" ? "AI" : initial}
+                          {msg.role === "ai" ? "🤖" : "🧑"}
                         </div>
                         <div className="message-container">
                           <div className="message-header">
@@ -688,7 +749,7 @@ export default function JourneyPage() {
                     ))}
                     {isSending && (
                       <div className="chat-message ai">
-                        <div className="avatar ai">AI</div>
+                        <div className="avatar ai">🤖</div>
                         <div className="bubble">
                           <div className="thinking-animation">AI 正在思考</div>
                         </div>
@@ -701,8 +762,8 @@ export default function JourneyPage() {
 
               {chatMessages.length === 0 && (
                 <div className="welcome-section">
-                  <div className="welcome-logo">Q</div>
-                  <h1 className="welcome-title">今天有什么可以帮到你？</h1>
+                  {/* <div className="welcome-logo">Q</div> */}
+                  <h1 className="welcome-title">{greeting}</h1>
                 </div>
               )}
 

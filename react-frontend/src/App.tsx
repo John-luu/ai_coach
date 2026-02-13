@@ -3,6 +3,8 @@ import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import IndexPage from "./pages/Index";
 import LoginPage from "./pages/Login";
 import JourneyPage from "./pages/Journey";
+import LearningReportPage from "./pages/LearningReport";
+import SandboxPage from "./pages/Sandbox";
 
 export default function App(): React.JSX.Element {
   const navigate = useNavigate();
@@ -27,6 +29,8 @@ export default function App(): React.JSX.Element {
       <Route path="/" element={<IndexPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/journey" element={<JourneyPage />} />
+      <Route path="/learning-report" element={<LearningReportPage />} />
+      <Route path="/sandbox" element={<SandboxPage />} />
     </Routes>
   );
 }

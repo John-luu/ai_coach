@@ -199,6 +199,28 @@ export async function getSessionMessages(
   return resp.json();
 }
 
+export async function getActivityDates(): Promise<{
+  success: boolean;
+  dates?: string[];
+  message?: string;
+}> {
+  const resp = await fetch("/api/chat/activity-dates", {
+    headers: getAuthHeaders(),
+  });
+  return resp.json();
+}
+
+export async function getGreeting(): Promise<{
+  success: boolean;
+  greeting?: string;
+  message?: string;
+}> {
+  const resp = await fetch("/api/chat/greeting", {
+    headers: getAuthHeaders(),
+  });
+  return resp.json();
+}
+
 // 跨阶测试
 export type CrossStageQuestion = {
   id: string;

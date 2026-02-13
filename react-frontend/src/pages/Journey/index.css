@@ -9,25 +9,26 @@
   box-sizing: border-box;
 }
 
-/* 设计变量 */
+/* 设计变量 - 新春版 */
 :root {
-  --color-bg-warm: #fefdfb;
-  --color-bg-cream: #fef9f3;
-  --color-bg-ivory: #fffbf5;
-  --color-primary: #d97706;
-  --color-primary-light: #f59e0b;
-  --color-primary-glow: rgba(217, 119, 6, 0.15);
-  --color-accent: #0d9488;
-  --color-accent-light: #14b8a6;
-  --color-text-primary: #1c1917;
-  --color-text-secondary: #44403c;
-  --color-text-muted: #78716c;
-  --color-border: rgba(120, 113, 108, 0.2);
+  --color-bg-warm: #fff9f9; /* 淡淡的粉红底色 */
+  --color-bg-cream: #fff5f5;
+  --color-bg-ivory: #fff0f0;
+  --color-primary: #d9434e; /* 新春红 */
+  --color-primary-light: #ef4444;
+  --color-primary-glow: rgba(217, 67, 78, 0.15);
+  --color-accent: #b91c1c; /* 深红 */
+  --color-accent-light: #dc2626;
+  --color-gold: #fbbf24; /* 金色 */
+  --color-text-primary: #2d0a0a; /* 深红黑 */
+  --color-text-secondary: #4a1c1c;
+  --color-text-muted: #947171;
+  --color-border: rgba(217, 67, 78, 0.1); /* 弱边框 */
   --color-card: #ffffff;
-  --color-card-shadow: rgba(28, 25, 23, 0.06);
+  --color-card-shadow: rgba(217, 67, 78, 0.04);
   --color-success: #059669;
   --color-success-bg: rgba(5, 150, 105, 0.1);
-  --radius-card: 20px;
+  --radius-card: 16px;
   --radius-pill: 12px;
   --radius-btn: 12px;
 }
@@ -90,8 +91,22 @@ body {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid rgba(217, 67, 78, 0.05);
   height: 60px;
+}
+
+.chat-header {
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(217, 67, 78, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .new-chat-btn {
@@ -159,7 +174,7 @@ body {
 }
 
 .history-item.active {
-  background: rgba(217, 119, 6, 0.08);
+  background: rgba(217, 67, 78, 0.08);
   color: var(--color-primary);
   font-weight: 600;
 }
@@ -251,16 +266,22 @@ body {
   border-color: var(--color-border);
 }
 
-/* 侧边栏卡片折叠 */
+/* 侧边栏卡片折叠 - 简约无边框版 */
 .accordion-card {
   padding: 0 !important;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: flex 0.3s ease;
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #fff;
+  border: 1px solid rgba(217, 67, 78, 0.05); /* 极弱边框 */
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(217, 67, 78, 0.02);
+}
+
+.accordion-card:hover {
+  box-shadow: 0 4px 12px rgba(217, 67, 78, 0.04);
+  border-color: rgba(217, 67, 78, 0.1);
 }
 
 .sidebar-collapsed .accordion-card {
@@ -268,17 +289,28 @@ body {
 }
 
 .accordion-header {
-  padding: 12px 16px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
   user-select: none;
-  background: rgba(120, 113, 108, 0.02);
+  background: transparent;
+}
+
+.accordion-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text-secondary);
 }
 
 .accordion-header:hover {
-  background: rgba(120, 113, 108, 0.05);
+  background: rgba(217, 67, 78, 0.02);
+}
+
+.accordion-card.active .accordion-header h3 {
+  color: var(--color-primary);
 }
 
 .accordion-icon {
@@ -408,20 +440,13 @@ body {
   flex-direction: column;
   min-height: 0;
   width: 100%;
-  max-width: 800px;
+  max-width: 900px; /* 稍微调宽一点以匹配 DeepSeek 风格 */
   margin: 0 auto;
   position: relative;
-  height: 100%; /* 始终保持全高，稳定定位基准 */
 }
 
 .journey-container.no-chat .journey-layout {
   justify-content: center;
-}
-
-/* 无对话状态下的输入框微调 */
-.no-chat .input-panel {
-  position: absolute; /* 保持绝对定位，防止跳变 */
-  bottom: 20vh; /* 在欢迎界面下方适当位置 */
 }
 
 /* ----- 欢迎区域 ----- */
@@ -483,30 +508,39 @@ body {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  padding: 40px 20px 0; /* 顶部留出空间 */
+  overflow: hidden; /* 由内部的 chat-window 处理滚动 */
+  padding: 20px 20px 0;
   background: transparent;
   border: none;
 }
 
 .chat-window {
-  padding: 20px 0 100px; /* 底部留出空间给输入框 */
   flex: 1;
-  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  scrollbar-width: none; /* 隐藏滚动条 */
+  gap: 24px;
+  padding: 24px 24px 40px; /* 底部留一点小间距即可 */
+  max-width: 100%;
+  margin: 0;
+  scroll-behavior: smooth;
 }
 
 .chat-window::-webkit-scrollbar {
-  display: none; /* 隐藏 Chrome/Safari 滚动条 */
+  width: 6px;
+}
+
+.chat-window::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .chat-window::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: rgba(217, 67, 78, 0.1);
   border-radius: 3px;
+}
+
+.chat-window::-webkit-scrollbar-thumb:hover {
+  background: rgba(217, 67, 78, 0.2);
 }
 
 /* ----- 对话消息时间戳 ----- */
@@ -562,16 +596,17 @@ body {
 }
 
 .avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 24px;
   flex-shrink: 0;
   margin-top: 4px;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .bubble {
@@ -584,18 +619,24 @@ body {
   max-width: 100%;
 }
 
-.chat-message.ai .bubble {
-  background: transparent;
-  border: none;
-  flex: 1;
+.chat-message.user .bubble {
+  background: #fdf2f2; /* 淡淡的新春红背景 */
+  color: var(--color-text-primary);
+  padding: 8px 14px; /* 压缩内边距 */
+  border-radius: 18px 2px 18px 18px; /* 类似 DeepSeek 的非对称圆角 */
+  max-width: 94%; /* 进一步拉长 */
+  box-shadow: 0 2px 8px rgba(217, 67, 78, 0.04);
+  border: 1px solid rgba(217, 67, 78, 0.05);
+  font-size: 15px;
+  line-height: 1.6;
 }
 
-.chat-message.user .bubble {
-  background: #f4f4f4; /* DeepSeek 风格的用户消息气泡 */
+.chat-message.ai .bubble {
+  padding: 8px 0; /* AI 回答通常没有气泡背景，压缩上下间距 */
+  font-size: 15px;
+  line-height: 1.7;
   color: var(--color-text-primary);
-  padding: 10px 16px;
-  border-radius: 18px;
-  max-width: 85%;
+  max-width: 100%;
 }
 
 .markdown-body p {
@@ -608,32 +649,36 @@ body {
 }
 
 .avatar.ai {
-  background: #f0f0f0;
-  color: var(--color-primary);
-  border: 1px solid var(--color-border);
+  font-family: "PingFang SC", sans-serif;
 }
 
 .avatar.user {
-  background: var(--color-primary);
-  color: #fff;
 }
 
-/* ----- 输入区 ----- */
-/* 输入框统一布局 */
+/* ----- 输入区 - 新春定制版 ----- */
 .input-panel {
-  position: absolute;
-  bottom: 24px;
-  left: 0;
-  right: 0; /* 撑满父容器 journey-layout 的宽度 */
-  width: auto; /* 取消固定宽度，由 left/right 决定 */
-  border: 1px solid var(--color-border);
-  background: #fff;
-  padding: 12px 16px;
+  position: relative;
+  width: auto;
+  border: 1.5px solid rgba(217, 67, 78, 0.15); /* 红色弱边框 */
+  background: rgba(255, 255, 255, 0.98);
+  padding: 14px 20px;
   border-radius: 20px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  margin: 0 20px; /* 与对话区左右边距对齐 */
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 平滑过渡 */
+  box-shadow: 0 8px 32px rgba(217, 67, 78, 0.08);
+  margin: 0 24px 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
+  backdrop-filter: blur(4px);
+  flex-shrink: 0;
+}
+
+.input-panel::after {
+  content: "🧧";
+  position: absolute;
+  right: 12px;
+  top: -24px;
+  font-size: 20px;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .input-panel:focus-within {
@@ -984,4 +1029,98 @@ body {
   font-size: 13px;
   color: var(--color-text-muted);
   margin-top: 4px;
+}
+
+/* 进度条样式 */
+.journey-stage-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.stage-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(217, 67, 78, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.stage-progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 100%
+  );
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stage-progress-text {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-align: right;
+  font-weight: 500;
+}
+
+/* 用户下拉菜单样式 */
+.user-menu-wrapper {
+  position: relative;
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  width: 160px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 24px rgba(217, 67, 78, 0.12);
+  padding: 8px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: slide-up 0.2s ease-out;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menu-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.menu-item:hover {
+  background: var(--color-bg-cream);
+  color: var(--color-primary);
+}
+
+.menu-item.logout {
+  color: var(--color-accent);
+  border-top: 1px solid rgba(217, 67, 78, 0.05);
+  margin-top: 4px;
+  padding-top: 12px;
+}
+
+.menu-item.logout:hover {
+  background: #fff5f5;
+  color: #b91c1c;
 }

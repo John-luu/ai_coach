@@ -53,6 +53,8 @@ func buildMux() *http.ServeMux {
 	mux.HandleFunc("/api/chat/session", chatHandler.CreateSession)
 	mux.HandleFunc("/api/chat/sessions", chatHandler.GetSessions)
 	mux.HandleFunc("/api/chat/messages", chatHandler.GetMessages)
+	mux.HandleFunc("/api/chat/activity-dates", chatHandler.GetActivityDates)
+	mux.HandleFunc("/api/chat/greeting", chatHandler.GetGreeting)
 
 	// Cross-stage test
 	crossStageHandler := handlers.NewCrossStageHandler(aiClient, userStore, signer)

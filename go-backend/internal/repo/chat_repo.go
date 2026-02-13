@@ -17,6 +17,8 @@ type ChatStore interface {
 	AddMessage(sessionID string, role, content string, sequence int) (*models.ChatMessage, error)
 	GetMessagesBySessionID(sessionID string) ([]*models.ChatMessage, error)
 	GetMessageCount(sessionID string) (int, error)
+	GetActivityDates(userID int64) ([]string, error)
+	GetLatestMessageTime(userID int64) (time.Time, error)
 }
 
 type ChatRepo struct {
@@ -132,6 +134,54 @@ func (r *ChatRepo) GetMessageCount(sessionID string) (int, error) {
 	return count, err
 }
 
+func (r *ChatRepo) GetActivityDates(userID int64) ([]string, error) {
+	// 获取用户所有会话中有消息产生的日期
+	rows, err := r.DB.Query(`
+		SELECT DISTINCT DATE(m.created_at) as activity_date 
+		FROM messages m
+		JOIN sessions s ON m.session_id = s.id
+		WHERE s.user_id = ?
+		ORDER BY activity_date ASC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var dates []string
+	for rows.Next() {
+		var d string
+		if err := rows.Scan(&d); err != nil {
+			return nil, err
+		}
+		dates = append(dates, d)
+	}
+	return dates, nil
+}
+
+func (r *ChatRepo) GetLatestMessageTime(userID int64) (time.Time, error) {
+	var tStr string
+	err := r.DB.QueryRow(`
+		SELECT m.created_at 
+		FROM messages m
+		JOIN sessions s ON m.session_id = s.id
+		WHERE s.user_id = ?
+		ORDER BY m.created_at DESC
+		LIMIT 1
+	`, userID).Scan(&tStr)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return time.Time{}, nil
+		}
+		return time.Time{}, err
+	}
+	t, err := time.Parse("2006-01-02 15:04:05", tStr)
+	if err != nil {
+		t, err = time.Parse(time.RFC3339, tStr)
+	}
+	return t, err
+}
+
 type MemoryChatRepo struct {
 	sessions map[string]*models.ChatSession
 	messages map[string][]*models.ChatMessage
@@ -200,8 +250,39 @@ func (r *MemoryChatRepo) GetMessagesBySessionID(sessionID string) ([]*models.Cha
 	return r.messages[sessionID], nil
 }
 
+func (r *MemoryChatRepo) GetActivityDates(userID int64) ([]string, error) {
+	dateMap := make(map[string]bool)
+	for sid, msgs := range r.messages {
+		if s, ok := r.sessions[sid]; ok && s.UserID == userID {
+			for _, m := range msgs {
+				dateStr := m.CreatedAt.Format("2006-01-02")
+				dateMap[dateStr] = true
+			}
+		}
+	}
+	var dates []string
+	for d := range dateMap {
+		dates = append(dates, d)
+	}
+	return dates, nil
+}
+
 func (r *MemoryChatRepo) GetMessageCount(sessionID string) (int, error) {
 	return len(r.messages[sessionID]), nil
+}
+
+func (r *MemoryChatRepo) GetLatestMessageTime(userID int64) (time.Time, error) {
+	var latest time.Time
+	for sid, msgs := range r.messages {
+		if s, ok := r.sessions[sid]; ok && s.UserID == userID {
+			for _, m := range msgs {
+				if m.CreatedAt.After(latest) {
+					latest = m.CreatedAt
+				}
+			}
+		}
+	}
+	return latest, nil
 }
 
 // I need to import fmt for CreateSession

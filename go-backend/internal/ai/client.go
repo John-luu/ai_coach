@@ -60,11 +60,30 @@ func (c *Client) Chat(messages []ChatMessage) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.APIKey)
 
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
+	// 使用更长的超时时间并增加重试逻辑
+	httpClient := &http.Client{Timeout: 60 * time.Second}
+	var resp *http.Response
+	var lastErr error
+
+	for i := 0; i < 2; i++ { // 最多重试 2 次（总共 3 次尝试）
+		resp, err = httpClient.Do(req)
+		if err == nil {
+			break
+		}
+		lastErr = err
+		log.Printf("[AI] Request attempt %d failed: %v. Retrying...", i+1, err)
+		time.Sleep(1 * time.Second) // 等待 1 秒后重试
+
+		// 如果是超时错误，重试是有意义的；如果是其他致命错误，可以直接退出
+		// 重新创建请求体，因为 strings.NewReader 在第一次 Do 之后可能已被消耗
+		req, _ = http.NewRequest("POST", url, strings.NewReader(string(b)))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	}
+
 	if err != nil {
-		log.Printf("[AI] Request error: %v", err)
-		return "", err
+		log.Printf("[AI] All request attempts failed. Last error: %v", lastErr)
+		return "", lastErr
 	}
 	defer resp.Body.Close()
 

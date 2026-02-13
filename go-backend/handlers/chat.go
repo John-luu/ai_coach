@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"aicoach-backend-go/internal/ai"
 	"aicoach-backend-go/internal/auth"
@@ -94,6 +95,100 @@ func (h *ChatHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, map[string]any{"success": true, "messages": messages})
 }
 
+func (h *ChatHandler) GetActivityDates(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	username, err := h.Signer.ParseUsername(tokenStr)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	u, _ := h.Repo.FindByUsername(username)
+	if u == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	dates, err := h.ChatStore.GetActivityDates(u.ID)
+	if err != nil {
+		WriteJSON(w, map[string]any{"success": false, "message": err.Error()})
+		return
+	}
+	WriteJSON(w, map[string]any{"success": true, "dates": dates})
+}
+
+func (h *ChatHandler) GetGreeting(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	username, err := h.Signer.ParseUsername(tokenStr)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	u, _ := h.Repo.FindByUsername(username)
+	if u == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	// 1. 获取所有活动日期
+	dates, err := h.ChatStore.GetActivityDates(u.ID)
+	if err != nil {
+		dates = []string{}
+	}
+
+	// 2. 获取最近一次消息时间
+	latestTime, _ := h.ChatStore.GetLatestMessageTime(u.ID)
+
+	greeting := "今天学什么？一起吧" // 默认文案
+	now := time.Now()
+
+	if len(dates) == 0 {
+		// 新用户第1次
+		greeting = "准备好开始学习了吗？"
+	} else if latestTime.IsZero() {
+		greeting = "准备好开始学习了吗？"
+	} else {
+		// 计算距离上一次提问的时间
+		daysSinceLast := int(now.Sub(latestTime).Hours() / 24)
+
+		if daysSinceLast == 0 || (daysSinceLast == 1 && now.Hour() < 4) {
+			// 今天或昨天深夜（凌晨4点前算昨天）
+			// 检查是否连续3天
+			if len(dates) >= 3 {
+				last3 := dates[len(dates)-3:]
+				isContinuous := true
+				for i := 1; i < len(last3); i++ {
+					t1, _ := time.Parse("2006-01-02", last3[i-1])
+					t2, _ := time.Parse("2006-01-02", last3[i])
+					if int(t2.Sub(t1).Hours()/24) > 1 {
+						isContinuous = false
+						break
+					}
+				}
+				if isContinuous {
+					greeting = "已经坚持3天啦，继续突破！"
+				} else {
+					greeting = "昨天的知识点掌握了吗？"
+				}
+			} else {
+				greeting = "昨天的知识点掌握了吗？"
+			}
+		} else if daysSinceLast >= 3 {
+			// 3天没来
+			greeting = "回来啦，这几天卡在哪了？"
+		} else if daysSinceLast == 1 || daysSinceLast == 2 {
+			// 昨天或前天
+			greeting = "昨天的知识点掌握了吗？"
+		}
+	}
+
+	WriteJSON(w, map[string]any{
+		"success":  true,
+		"greeting": greeting,
+	})
+}
+
 func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -178,7 +273,11 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 		{Role: "system", Content: systemPrompt},
 	}
 	for _, m := range history {
-		aiMessages = append(aiMessages, ai.ChatMessage{Role: m.Role, Content: m.Content})
+		role := m.Role
+		if role == "ai" {
+			role = "assistant"
+		}
+		aiMessages = append(aiMessages, ai.ChatMessage{Role: role, Content: m.Content})
 	}
 	aiMessages = append(aiMessages, ai.ChatMessage{Role: "user", Content: req.Question})
 

@@ -238,37 +238,40 @@ export default function IndexPage(): React.JSX.Element {
                   <h3 className="step-title">
                     你计划中，每天能拿出多久用于专注学习？
                   </h3>
-                  <input
-                    className="input"
-                    type="text"
-                    placeholder="例如：30 分钟 / 60 分钟 / 2 小时"
-                    value={answers.dailyTime}
-                    onChange={(e) =>
-                      setAnswers({ ...answers, dailyTime: e.target.value })
-                    }
-                  />
+                  <div className="input-with-unit">
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="例如：60"
+                      value={answers.dailyTime}
+                      onChange={(e) =>
+                        setAnswers({ ...answers, dailyTime: e.target.value })
+                      }
+                    />
+                    <span className="unit-label">分钟</span>
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="assessment-footer">
+            <div className="assessment-actions">
               <button
-                className="btn ghost"
+                className="btn btn-secondary"
                 onClick={handlePrevStep}
-                disabled={currentStep === 1}
+                disabled={currentStep === 1 || isEvaluating}
               >
                 上一步
               </button>
               <button
-                className="btn primary"
+                className="btn btn-primary"
                 onClick={handleNextStep}
                 disabled={isEvaluating}
               >
                 {isEvaluating
-                  ? "生成中..."
+                  ? "正在生成画像..."
                   : currentStep === 5
-                    ? "完成体检"
-                    : "下一题"}
+                    ? "开启学习之旅"
+                    : "下一步"}
               </button>
             </div>
           </section>
