@@ -98,6 +98,19 @@ func initSchema(db *sql.DB) error {
 		return err
 	}
 
+	// Create snapshots table
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS snapshots (
+		id BIGINT AUTO_INCREMENT PRIMARY KEY,
+		user_id BIGINT NOT NULL,
+		role VARCHAR(50) NOT NULL,
+		content LONGTEXT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users(id)
+	)`)
+	if err != nil {
+		return err
+	}
+
 	// Create profiles table
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS profiles (
 		user_id BIGINT PRIMARY KEY,
@@ -162,5 +175,13 @@ func connectManual(user, pass, addr string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db, db.Ping()
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+	
+	if err := initSchema(db); err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }

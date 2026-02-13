@@ -318,6 +318,93 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *ChatHandler) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	username, err := h.Signer.ParseUsername(tokenStr)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	u, _ := h.Repo.FindByUsername(username)
+	if u == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	var req struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	snapshot, err := h.ChatStore.CreateSnapshot(u.ID, req.Role, req.Content)
+	if err != nil {
+		WriteJSON(w, map[string]any{"success": false, "message": err.Error()})
+		return
+	}
+	WriteJSON(w, map[string]any{"success": true, "snapshot": snapshot})
+}
+
+func (h *ChatHandler) GetSnapshots(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	username, err := h.Signer.ParseUsername(tokenStr)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	u, _ := h.Repo.FindByUsername(username)
+	if u == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	snapshots, err := h.ChatStore.GetSnapshotsByUserID(u.ID)
+	if err != nil {
+		WriteJSON(w, map[string]any{"success": false, "message": err.Error()})
+		return
+	}
+	WriteJSON(w, map[string]any{"success": true, "snapshots": snapshots})
+}
+
+func (h *ChatHandler) DeleteSnapshot(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	authHeader := r.Header.Get("Authorization")
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	username, err := h.Signer.ParseUsername(tokenStr)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	u, _ := h.Repo.FindByUsername(username)
+	if u == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	snapshotIDStr := r.URL.Query().Get("id")
+	var snapshotID int64
+	fmt.Sscanf(snapshotIDStr, "%d", &snapshotID)
+
+	err = h.ChatStore.DeleteSnapshot(snapshotID, u.ID)
+	if err != nil {
+		WriteJSON(w, map[string]any{"success": false, "message": err.Error()})
+		return
+	}
+	WriteJSON(w, map[string]any{"success": true})
+}
+
 func generateTitle(text string) string {
 	text = strings.TrimSpace(text)
 	if text == "" {

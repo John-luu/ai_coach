@@ -19,6 +19,10 @@ type ChatStore interface {
 	GetMessageCount(sessionID string) (int, error)
 	GetActivityDates(userID int64) ([]string, error)
 	GetLatestMessageTime(userID int64) (time.Time, error)
+
+	CreateSnapshot(userID int64, role, content string) (*models.Snapshot, error)
+	GetSnapshotsByUserID(userID int64) ([]*models.Snapshot, error)
+	DeleteSnapshot(snapshotID int64, userID int64) error
 }
 
 type ChatRepo struct {
@@ -182,15 +186,62 @@ func (r *ChatRepo) GetLatestMessageTime(userID int64) (time.Time, error) {
 	return t, err
 }
 
+func (r *ChatRepo) CreateSnapshot(userID int64, role, content string) (*models.Snapshot, error) {
+	now := time.Now()
+	res, err := r.DB.Exec(`INSERT INTO snapshots (user_id, role, content, created_at) VALUES (?, ?, ?, ?)`,
+		userID, role, content, now)
+	if err != nil {
+		return nil, err
+	}
+	id, _ := res.LastInsertId()
+	return &models.Snapshot{
+		ID:        id,
+		UserID:    userID,
+		Role:      role,
+		Content:   content,
+		CreatedAt: now,
+	}, nil
+}
+
+func (r *ChatRepo) GetSnapshotsByUserID(userID int64) ([]*models.Snapshot, error) {
+	rows, err := r.DB.Query(`SELECT id, user_id, role, content, created_at FROM snapshots WHERE user_id = ? ORDER BY created_at DESC`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var snapshots []*models.Snapshot
+	for rows.Next() {
+		var s models.Snapshot
+		var createdAtStr string
+		if err := rows.Scan(&s.ID, &s.UserID, &s.Role, &s.Content, &createdAtStr); err != nil {
+			return nil, err
+		}
+		s.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+		if s.CreatedAt.IsZero() {
+			s.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
+		}
+		snapshots = append(snapshots, &s)
+	}
+	return snapshots, nil
+}
+
+func (r *ChatRepo) DeleteSnapshot(snapshotID int64, userID int64) error {
+	_, err := r.DB.Exec(`DELETE FROM snapshots WHERE id = ? AND user_id = ?`, snapshotID, userID)
+	return err
+}
+
 type MemoryChatRepo struct {
-	sessions map[string]*models.ChatSession
-	messages map[string][]*models.ChatMessage
+	sessions  map[string]*models.ChatSession
+	messages  map[string][]*models.ChatMessage
+	snapshots map[int64][]*models.Snapshot
 }
 
 func NewMemoryChatRepo() *MemoryChatRepo {
 	return &MemoryChatRepo{
-		sessions: make(map[string]*models.ChatSession),
-		messages: make(map[string][]*models.ChatMessage),
+		sessions:  make(map[string]*models.ChatSession),
+		messages:  make(map[string][]*models.ChatMessage),
+		snapshots: make(map[int64][]*models.Snapshot),
 	}
 }
 
@@ -283,6 +334,34 @@ func (r *MemoryChatRepo) GetLatestMessageTime(userID int64) (time.Time, error) {
 		}
 	}
 	return latest, nil
+}
+
+func (r *MemoryChatRepo) CreateSnapshot(userID int64, role, content string) (*models.Snapshot, error) {
+	now := time.Now()
+	s := &models.Snapshot{
+		ID:        time.Now().UnixNano(),
+		UserID:    userID,
+		Role:      role,
+		Content:   content,
+		CreatedAt: now,
+	}
+	r.snapshots[userID] = append(r.snapshots[userID], s)
+	return s, nil
+}
+
+func (r *MemoryChatRepo) GetSnapshotsByUserID(userID int64) ([]*models.Snapshot, error) {
+	return r.snapshots[userID], nil
+}
+
+func (r *MemoryChatRepo) DeleteSnapshot(snapshotID int64, userID int64) error {
+	list := r.snapshots[userID]
+	for i, s := range list {
+		if s.ID == snapshotID {
+			r.snapshots[userID] = append(list[:i], list[i+1:]...)
+			break
+		}
+	}
+	return nil
 }
 
 // I need to import fmt for CreateSession

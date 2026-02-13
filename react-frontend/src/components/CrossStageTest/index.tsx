@@ -150,6 +150,16 @@ export default function CrossStageTest({
         <div className="fab-tooltip">代码实验室</div>
       </div>
 
+      {/* 草稿悬浮球 */}
+      <div
+        className="fab-item draft-fab"
+        onClick={() => alert("草稿功能开发中...")}
+        style={{ top: "calc(50% + 70px)" }}
+      >
+        <span className="fab-icon">✍️</span>
+        <div className="fab-tooltip">我要做草稿</div>
+      </div>
+
       {visible && (
         <div className="cross-stage-overlay" onClick={handleClose}>
           <div

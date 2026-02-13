@@ -55,6 +55,16 @@ func buildMux() *http.ServeMux {
 	mux.HandleFunc("/api/chat/messages", chatHandler.GetMessages)
 	mux.HandleFunc("/api/chat/activity-dates", chatHandler.GetActivityDates)
 	mux.HandleFunc("/api/chat/greeting", chatHandler.GetGreeting)
+	mux.HandleFunc("/api/chat/snapshots", chatHandler.GetSnapshots)
+	mux.HandleFunc("/api/chat/snapshot", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			chatHandler.CreateSnapshot(w, r)
+		} else if r.Method == http.MethodDelete {
+			chatHandler.DeleteSnapshot(w, r)
+		} else {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
 	// Cross-stage test
 	crossStageHandler := handlers.NewCrossStageHandler(aiClient, userStore, signer)

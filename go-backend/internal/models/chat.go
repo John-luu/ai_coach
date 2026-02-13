@@ -17,3 +17,11 @@ type ChatMessage struct {
 	Sequence  int       `json:"sequence"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+type Snapshot struct {
+	ID        int64     `json:"id"`
+	UserID    int64     `json:"userId"`
+	Role      string    `json:"role"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"createdAt"`
+}

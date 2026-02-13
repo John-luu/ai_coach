@@ -5,6 +5,7 @@ import LoginPage from "./pages/Login";
 import JourneyPage from "./pages/Journey";
 import LearningReportPage from "./pages/LearningReport";
 import SandboxPage from "./pages/Sandbox";
+import MySnapshotsPage from "./pages/MySnapshots";
 
 export default function App(): React.JSX.Element {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export default function App(): React.JSX.Element {
       <Route path="/journey" element={<JourneyPage />} />
       <Route path="/learning-report" element={<LearningReportPage />} />
       <Route path="/sandbox" element={<SandboxPage />} />
+      <Route path="/mySnapshots" element={<MySnapshotsPage />} />
     </Routes>
   );
 }

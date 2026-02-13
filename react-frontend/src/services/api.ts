@@ -42,6 +42,14 @@ export type ChatMessage = {
   createdAt: string;
 };
 
+export type Snapshot = {
+  id: number;
+  userId: number;
+  role: string;
+  content: string;
+  createdAt: string;
+};
+
 export type AssessmentResult = {
   profile?: {
     level: string;
@@ -75,6 +83,63 @@ export async function login(
     body: JSON.stringify({ username, password }),
   });
   return resp.json();
+}
+
+export async function createSnapshot(
+  role: string,
+  content: string,
+): Promise<{ success: boolean; snapshot?: Snapshot; message?: string }> {
+  try {
+    const resp = await fetch("/api/chat/snapshot", {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ role, content }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      return { success: false, message: `服务器错误 (${resp.status}): ${text}` };
+    }
+    return resp.json();
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+export async function getSnapshots(): Promise<{
+  success: boolean;
+  snapshots?: Snapshot[];
+  message?: string;
+}> {
+  try {
+    const resp = await fetch("/api/chat/snapshots", {
+      headers: getAuthHeaders(),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      return { success: false, message: `服务器错误 (${resp.status}): ${text}` };
+    }
+    return resp.json();
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+export async function deleteSnapshot(
+  id: number,
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const resp = await fetch(`/api/chat/snapshot?id=${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      return { success: false, message: `服务器错误 (${resp.status}): ${text}` };
+    }
+    return resp.json();
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
 }
 
 export async function register(

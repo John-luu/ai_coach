@@ -71,6 +71,13 @@
   animation-delay: -4s;
 }
 
+/* 草稿 - 橙色/金色风格 */
+.draft-fab {
+  color: #fbbf24;
+  background: radial-gradient(circle at center, rgba(251, 191, 36, 0.8) 0%, rgba(251, 191, 36, 0.1) 70%, transparent 100%);
+  animation-delay: -1s;
+}
+
 .fab-disabled {
   opacity: 0.3;
   cursor: not-allowed;

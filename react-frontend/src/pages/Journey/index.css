@@ -639,6 +639,89 @@ body {
   max-width: 100%;
 }
 
+.snapshot-btn {
+  position: absolute;
+  right: 0;
+  bottom: -22px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 10px;
+  opacity: 0;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+.bubble:hover .snapshot-btn {
+  opacity: 1;
+}
+
+.snapshot-btn.success {
+  opacity: 1;
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.snapshot-btn.error {
+  opacity: 1;
+  color: #ef4444;
+  border-color: #ef4444;
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.snapshot-btn.loading {
+  opacity: 1;
+  cursor: wait;
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+.snapshot-success-icon {
+  font-size: 14px;
+}
+
+.snapshot-error-icon {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.snapshot-btn:hover {
+  color: var(--color-primary);
+  background: #fff;
+  border-color: var(--color-primary-light);
+  box-shadow: 0 2px 8px rgba(217, 67, 78, 0.1);
+}
+
+.chat-message.user .snapshot-btn {
+  right: 0;
+  bottom: -22px;
+}
+
 .markdown-body p {
   margin: 0 0 12px;
 }

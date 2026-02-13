@@ -11,11 +11,11 @@ import {
   crossStageSubmitTest,
   CrossStageQuestion,
   ChatSession,
-  ChatMessage,
   getSessions,
   createSession,
   getSessionMessages,
   getGreeting,
+  createSnapshot,
 } from "../../services/api";
 import { logout as doLogout } from "../../modules/auth";
 import CrossStageTest from "../../components/CrossStageTest";
@@ -66,6 +66,9 @@ export default function JourneyPage() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [greeting, setGreeting] = useState("今天学什么？一起吧");
+  const [snapshotStates, setSnapshotStates] = useState<
+    Record<number, "idle" | "loading" | "success" | "error">
+  >({});
 
   const fetchSessions = useCallback(async () => {
     setIsSessionsLoading(true);
@@ -264,6 +267,40 @@ export default function JourneyPage() {
   const handleLogout = () => {
     doLogout();
     window.location.href = "/login";
+  };
+
+  const handleSnapshot = async (
+    msg: { role: string; content: string },
+    index: number,
+  ) => {
+    if (
+      snapshotStates[index] === "loading" ||
+      snapshotStates[index] === "success"
+    )
+      return;
+
+    setSnapshotStates((prev) => ({ ...prev, [index]: "loading" }));
+    try {
+      const res = await createSnapshot(msg.role, msg.content);
+      if (res.success) {
+        setSnapshotStates((prev) => ({ ...prev, [index]: "success" }));
+        // 3秒后恢复初始状态，允许再次点击（如果需要）
+        setTimeout(() => {
+          setSnapshotStates((prev) => ({ ...prev, [index]: "idle" }));
+        }, 3000);
+      } else {
+        setSnapshotStates((prev) => ({ ...prev, [index]: "error" }));
+        setTimeout(() => {
+          setSnapshotStates((prev) => ({ ...prev, [index]: "idle" }));
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("存入快照失败", err);
+      setSnapshotStates((prev) => ({ ...prev, [index]: "error" }));
+      setTimeout(() => {
+        setSnapshotStates((prev) => ({ ...prev, [index]: "idle" }));
+      }, 2000);
+    }
   };
 
   const handleCrossStagePass = useCallback((newStage: number) => {
@@ -693,6 +730,12 @@ export default function JourneyPage() {
                       >
                         学习报告
                       </div>
+                      <div
+                        className="menu-item"
+                        onClick={() => navigate("/mySnapshots")}
+                      >
+                        我的快照
+                      </div>
                       <div className="menu-item">帮助与反馈</div>
                       <div className="menu-item logout" onClick={handleLogout}>
                         退出登录
@@ -743,6 +786,34 @@ export default function JourneyPage() {
                             ) : (
                               msg.content
                             )}
+                            <button
+                              className={`snapshot-btn ${snapshotStates[i] || "idle"}`}
+                              onClick={() => handleSnapshot(msg, i)}
+                              title={
+                                snapshotStates[i] === "success"
+                                  ? "已存入快照"
+                                  : snapshotStates[i] === "error"
+                                    ? "存入失败"
+                                    : "存入快照"
+                              }
+                              disabled={snapshotStates[i] === "loading"}
+                            >
+                              {snapshotStates[i] === "success" ? (
+                                <span className="snapshot-success-icon">
+                                  ✅
+                                </span>
+                              ) : snapshotStates[i] === "error" ? (
+                                <span className="snapshot-error-icon">
+                                  ❌ 失败
+                                </span>
+                              ) : snapshotStates[i] === "loading" ? (
+                                <span className="snapshot-loading-icon">
+                                  ⏳
+                                </span>
+                              ) : (
+                                "📸 快照"
+                              )}
+                            </button>
                           </div>
                         </div>
                       </div>
