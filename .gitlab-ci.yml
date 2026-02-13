@@ -4,7 +4,7 @@ stages:
 
 variables:
   DEPLOY_SERVER: "cz@192.168.0.108"
-  DEPLOY_PATH: "/data/aistudy"
+  DEPLOY_PATH: "/data/ai_course"
   FRONTEND_DIR: "react-frontend"
   BACKEND_DIR: "go-backend"
 

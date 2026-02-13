@@ -18,7 +18,7 @@ type Config struct {
 
 func Load() *Config {
 	return &Config{
-		ServerPort: getEnv("AI_COACH_PORT", "8080"),
+		ServerPort: getEnv("AI_COACH_PORT", "8093"),
 		DBUrl:      getEnv("AI_COACH_DB_URL", "tcp(localhost:3306)/ai_coach_db?charset=utf8&parseTime=True&loc=Local"),
 		DBUser:     getEnv("AI_COACH_DB_USER", "root"),
 		DBPass:     getEnv("AI_COACH_DB_PASS", "Root@123456"),
