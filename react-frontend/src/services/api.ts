@@ -31,6 +31,7 @@ export type ChatSession = {
   userId: number;
   title: string;
   createdAt: string;
+  firstUserMessageAt?: string;
 };
 
 export type ChatMessage = {

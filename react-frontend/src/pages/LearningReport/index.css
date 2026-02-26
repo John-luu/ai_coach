@@ -195,14 +195,10 @@
 }
 
 .calendar-day.active {
-  background: linear-gradient(
-    135deg,
-    var(--color-primary-light),
-    var(--color-primary)
-  );
+  background: linear-gradient(135deg, #ef4444, #d9434e);
   color: white;
   font-weight: 700;
-  box-shadow: 0 2px 8px var(--color-primary-glow);
+  box-shadow: 0 4px 12px rgba(217, 67, 78, 0.25);
 }
 
 .calendar-day.today {

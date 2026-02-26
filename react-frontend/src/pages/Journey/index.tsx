@@ -118,7 +118,6 @@ export default function JourneyPage() {
     try {
       const res = await createSession();
       if (res.success && res.session) {
-        setSessions((prev) => [res.session!, ...prev]);
         setCurrentSessionId(res.session.id);
         setChatMessages([]);
         setActiveSidebarCard("history");
@@ -357,7 +356,6 @@ export default function JourneyPage() {
         if (res.success && res.session) {
           sessionId = res.session.id;
           setCurrentSessionId(sessionId);
-          setSessions((prev) => [res.session!, ...prev]);
         } else {
           alert("创建会话失败，请稍后重试");
           return;
@@ -472,36 +470,42 @@ export default function JourneyPage() {
     "format",
   ].filter((k) => detectModuleCovered(promptValue, k)).length;
 
-  const formatTime = (currentDateStr?: string, prevDateStr?: string) => {
+  const formatTime = (currentDateStr?: string) => {
     if (!currentDateStr) return "";
-    const current = new Date(currentDateStr);
-    if (isNaN(current.getTime())) return "";
+    const d = new Date(currentDateStr);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
 
-    if (!prevDateStr) {
-      return current.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
+  const formatSessionTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    const now = new Date();
+    const sameYear = d.getFullYear() === now.getFullYear();
+    const yyyy = d.getFullYear();
+    const MM = String(d.getMonth() + 1).padStart(2, "0");
+    const DD = String(d.getDate()).padStart(2, "0");
+    const HH = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return sameYear
+      ? `${MM}-${DD} ${HH}:${mm}`
+      : `${yyyy}-${MM}-${DD} ${HH}:${mm}`;
+  };
 
-    const prev = new Date(prevDateStr);
-    if (isNaN(prev.getTime())) {
-      return current.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
-
-    const diffMs = current.getTime() - prev.getTime();
-    if (diffMs > 60000) {
-      return current.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } else {
-      const seconds = Math.floor(diffMs / 1000);
-      return `${seconds > 0 ? seconds : 1}秒后`;
-    }
+  const formatUserMessageTime = (dateStr?: string) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    const now = new Date();
+    const sameYear = d.getFullYear() === now.getFullYear();
+    const yyyy = d.getFullYear();
+    const MM = String(d.getMonth() + 1).padStart(2, "0");
+    const DD = String(d.getDate()).padStart(2, "0");
+    const HH = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return sameYear
+      ? `${MM}-${DD} ${HH}:${mm}`
+      : `${yyyy}-${MM}-${DD} ${HH}:${mm}`;
   };
 
   const initial = (user?.displayName || user?.username || "U")[0].toUpperCase();
@@ -562,7 +566,7 @@ export default function JourneyPage() {
                       className="accordion-header"
                       onClick={() => setActiveSidebarCard("profile")}
                     >
-                      <h2 className="card-title">你的 AI 学习画像</h2>
+                      <h2 className="card-title">您的 AI 学习画像</h2>
                       <span className="accordion-icon">
                         {activeSidebarCard === "profile" ? "−" : "+"}
                       </span>
@@ -607,7 +611,7 @@ export default function JourneyPage() {
                         className="accordion-header"
                         onClick={() => setActiveSidebarCard("plan")}
                       >
-                        <h2 className="card-title">你的专属学习计划</h2>
+                        <h2 className="card-title">您的专属学习计划</h2>
                         <span className="accordion-icon">
                           {activeSidebarCard === "plan" ? "−" : "+"}
                         </span>
@@ -665,17 +669,24 @@ export default function JourneyPage() {
                         <div className="history-empty">暂无对话记录</div>
                       ) : (
                         <div className="history-list">
-                          {sessions.map((s) => (
-                            <div
-                              key={s.id}
-                              className={`history-item ${currentSessionId === s.id ? "active" : ""}`}
-                              onClick={() => handleSwitchSession(s.id)}
-                            >
-                              <span className="history-item-title">
-                                {s.title}
-                              </span>
-                            </div>
-                          ))}
+                          {sessions
+                            .filter((s) => s.title !== "新会话")
+                            .map((s) => (
+                              <div
+                                key={s.id}
+                                className={`history-item ${currentSessionId === s.id ? "active" : ""}`}
+                                onClick={() => handleSwitchSession(s.id)}
+                              >
+                                <span className="history-item-title">
+                                  {s.title}
+                                </span>
+                                <span className="history-item-time">
+                                  {formatSessionTime(
+                                    s.firstUserMessageAt || s.createdAt,
+                                  )}
+                                </span>
+                              </div>
+                            ))}
                         </div>
                       )}
                     </div>
@@ -772,10 +783,9 @@ export default function JourneyPage() {
                                 : user.displayName || user.username}
                             </span>
                             <span className="message-time">
-                              {formatTime(
-                                msg.createdAt,
-                                chatMessages[i - 1]?.createdAt,
-                              )}
+                              {msg.role === "user"
+                                ? formatUserMessageTime(msg.createdAt)
+                                : formatTime(msg.createdAt)}
                             </span>
                           </div>
                           <div className="bubble">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getActivityDates } from "../../services/api";
 import "./index.css";
@@ -13,11 +13,23 @@ const LearningReport: React.FC = () => {
     const fetchDates = async () => {
       const res = await getActivityDates();
       if (res.success && res.dates) {
-        setActiveDates(res.dates);
+        const normalized = res.dates
+          .map((d) => (d.length >= 10 ? d.slice(0, 10) : d))
+          .map((d) => {
+            const [y, m, day] = d.split(/[-/]/);
+            const yy = y?.padStart(4, "0") || "";
+            const mm = (m || "").padStart(2, "0");
+            const dd = (day || "").padStart(2, "0");
+            if (yy && mm && dd) return `${yy}-${mm}-${dd}`;
+            return d;
+          });
+        setActiveDates(normalized);
       }
     };
     fetchDates();
   }, []);
+
+  const activeSet = useMemo(() => new Set(activeDates), [activeDates]);
 
   const daysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
@@ -46,7 +58,7 @@ const LearningReport: React.FC = () => {
       const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
         day,
       ).padStart(2, "0")}`;
-      const isActive = activeDates.includes(dateStr);
+      const isActive = activeSet.has(dateStr);
       const isToday = new Date().toISOString().split("T")[0] === dateStr;
 
       days.push(

@@ -161,9 +161,10 @@ body {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 14px;
   color: var(--color-text-secondary);
 }
@@ -177,6 +178,19 @@ body {
   background: rgba(217, 67, 78, 0.08);
   color: var(--color-primary);
   font-weight: 600;
+}
+
+.history-item-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-item-time {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-left: 8px;
 }
 
 .history-loading,
@@ -298,6 +312,15 @@ body {
   background: transparent;
 }
 
+.accordion-header .card-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0;
+}
+
 .accordion-header h3 {
   font-size: 14px;
   font-weight: 600;
@@ -309,14 +332,18 @@ body {
   background: rgba(217, 67, 78, 0.02);
 }
 
+.accordion-card.active .accordion-header .card-title {
+  color: var(--color-primary);
+}
+
 .accordion-card.active .accordion-header h3 {
   color: var(--color-primary);
 }
 
 .accordion-icon {
-  font-size: 18px;
+  font-size: 20px;
   color: var(--color-text-muted);
-  font-weight: 300;
+  font-weight: 600;
 }
 
 .accordion-content {

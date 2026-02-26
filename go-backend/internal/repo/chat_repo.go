@@ -50,7 +50,15 @@ func (r *ChatRepo) CreateSession(userID int64, title string) (*models.ChatSessio
 }
 
 func (r *ChatRepo) GetSessionsByUserID(userID int64) ([]*models.ChatSession, error) {
-	rows, err := r.DB.Query(`SELECT id, user_id, title, created_at FROM sessions WHERE user_id = ? ORDER BY created_at DESC`, userID)
+	rows, err := r.DB.Query(`
+		SELECT s.id, s.user_id, s.title, s.created_at,
+		       MIN(CASE WHEN m.role='user' THEN m.created_at END) AS first_user_msg_time
+		FROM sessions s
+		LEFT JOIN messages m ON m.session_id = s.id
+		WHERE s.user_id = ?
+		GROUP BY s.id, s.user_id, s.title, s.created_at
+		ORDER BY COALESCE(first_user_msg_time, s.created_at) DESC
+	`, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -59,13 +67,20 @@ func (r *ChatRepo) GetSessionsByUserID(userID int64) ([]*models.ChatSession, err
 	var sessions []*models.ChatSession
 	for rows.Next() {
 		var s models.ChatSession
-		var createdAtStr string
-		if err := rows.Scan(&s.ID, &s.UserID, &s.Title, &createdAtStr); err != nil {
+		var createdAtStr, firstUserMsgStr sql.NullString
+		if err := rows.Scan(&s.ID, &s.UserID, &s.Title, &createdAtStr, &firstUserMsgStr); err != nil {
 			return nil, err
 		}
-		s.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+		s.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr.String)
 		if s.CreatedAt.IsZero() {
-			s.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
+			s.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr.String)
+		}
+		if firstUserMsgStr.Valid {
+			if t, err := time.Parse("2006-01-02 15:04:05", firstUserMsgStr.String); err == nil {
+				s.FirstUserMessageAt = &t
+			} else if t2, err2 := time.Parse(time.RFC3339, firstUserMsgStr.String); err2 == nil {
+				s.FirstUserMessageAt = &t2
+			}
 		}
 		sessions = append(sessions, &s)
 	}
@@ -262,6 +277,17 @@ func (r *MemoryChatRepo) GetSessionsByUserID(userID int64) ([]*models.ChatSessio
 	var res []*models.ChatSession
 	for _, s := range r.sessions {
 		if s.UserID == userID {
+			// 计算该会话的首条用户消息时间
+			var first *time.Time
+			for _, m := range r.messages[s.ID] {
+				if m.Role == "user" {
+					if first == nil || m.CreatedAt.Before(*first) {
+						t := m.CreatedAt
+						first = &t
+					}
+				}
+			}
+			s.FirstUserMessageAt = first
 			res = append(res, s)
 		}
 	}

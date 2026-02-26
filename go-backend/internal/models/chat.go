@@ -7,6 +7,7 @@ type ChatSession struct {
 	UserID    int64     `json:"userId"`
 	Title     string    `json:"title"`
 	CreatedAt time.Time `json:"createdAt"`
+	FirstUserMessageAt *time.Time `json:"firstUserMessageAt,omitempty"`
 }
 
 type ChatMessage struct {
