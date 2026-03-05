@@ -1,22 +1,5 @@
 /* 使用与 Journey 页面一致的设计变量 */
-:root {
-  --color-bg-warm: #fff9f9;
-  --color-bg-cream: #fff5f5;
-  --color-bg-ivory: #fff0f0;
-  --color-primary: #d9434e;
-  --color-primary-light: #ef4444;
-  --color-primary-glow: rgba(217, 67, 78, 0.15);
-  --color-accent: #b91c1c;
-  --color-text-primary: #2d0a0a;
-  --color-text-secondary: #4a1c1c;
-  --color-text-muted: #947171;
-  --color-border: rgba(217, 67, 78, 0.1);
-  --color-card: #ffffff;
-  --color-success: #059669;
-  --radius-card: 16px;
-  --radius-pill: 12px;
-  --radius-btn: 12px;
-}
+/* 变量来自全局 themes.css（html[data-theme]） */
 
 .report-container {
   min-height: 100vh;
@@ -42,9 +25,9 @@
 
 .back-btn {
   align-self: flex-start;
-  background: white;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
+  background: var(--back-btn-bg);
+  border: 1px solid var(--back-btn-border);
+  color: var(--back-btn-color);
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
@@ -57,12 +40,16 @@
   gap: 8px;
 }
 
+.back-btn .back-icon {
+  color: currentColor;
+}
+
 .back-btn:hover {
-  background: var(--color-bg-cream);
-  border-color: var(--color-primary-light);
-  color: var(--color-primary);
+  background: var(--back-btn-hover-bg);
+  border-color: var(--back-btn-hover-border);
+  color: var(--back-btn-hover-color);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--color-primary-glow);
+  box-shadow: var(--back-btn-hover-shadow);
 }
 
 .header-title-group {
@@ -81,11 +68,12 @@
 
 /* 视图切换按钮 */
 .view-toggle {
-  background: rgba(217, 67, 78, 0.05);
+  background: var(--seg-bg);
   padding: 4px;
   border-radius: 12px;
   display: flex;
   gap: 4px;
+  border: 1px solid var(--seg-border);
 }
 
 .view-toggle button {
@@ -95,15 +83,15 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-text-muted);
+  color: var(--seg-btn-color);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .view-toggle button.active {
-  background: white;
-  color: var(--color-primary);
-  box-shadow: 0 2px 8px rgba(217, 67, 78, 0.1);
+  background: var(--seg-btn-active-bg);
+  color: var(--seg-btn-active-color);
+  box-shadow: var(--seg-shadow);
 }
 
 .report-content {
@@ -195,15 +183,19 @@
 }
 
 .calendar-day.active {
-  background: linear-gradient(135deg, #ef4444, #d9434e);
+  background: linear-gradient(
+    135deg,
+    var(--calendar-active-from),
+    var(--calendar-active-to)
+  );
   color: white;
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(217, 67, 78, 0.25);
+  box-shadow: var(--calendar-active-shadow);
 }
 
 .calendar-day.today {
-  border: 1.5px solid var(--color-primary);
-  color: var(--color-primary);
+  border: 1.5px solid var(--calendar-today-border);
+  color: var(--calendar-today-border);
 }
 
 .calendar-day.active.today {
@@ -278,8 +270,8 @@
 .dot.active {
   background: linear-gradient(
     135deg,
-    var(--color-primary-light),
-    var(--color-primary)
+    var(--calendar-legend-active-from),
+    var(--calendar-legend-active-to)
   );
 }
 

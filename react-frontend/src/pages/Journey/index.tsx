@@ -50,7 +50,7 @@ export default function JourneyPage() {
   const [suggestionPopoverOpen, setSuggestionPopoverOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeSidebarCard, setActiveSidebarCard] = useState<
-    "profile" | "plan" | "history"
+    "profile" | "plan" | "history" | null
   >("profile");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const suggestionTriggerRef = useRef<HTMLDivElement>(null);
@@ -69,6 +69,21 @@ export default function JourneyPage() {
   const [snapshotStates, setSnapshotStates] = useState<
     Record<number, "idle" | "loading" | "success" | "error">
   >({});
+  const [theme, setTheme] = useState<string>(
+    () => localStorage.getItem("app_theme") || "newyear",
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("app_theme", theme);
+  }, [theme]);
+
+  const cycleTheme = () => {
+    const order = ["newyear", "light", "dark"];
+    const idx = order.indexOf(theme);
+    const next = order[(idx + 1) % order.length];
+    setTheme(next);
+  };
 
   const fetchSessions = useCallback(async () => {
     setIsSessionsLoading(true);
@@ -564,7 +579,11 @@ export default function JourneyPage() {
                   >
                     <div
                       className="accordion-header"
-                      onClick={() => setActiveSidebarCard("profile")}
+                      onClick={() =>
+                        setActiveSidebarCard(
+                          activeSidebarCard === "profile" ? null : "profile",
+                        )
+                      }
                     >
                       <h2 className="card-title">您的 AI 学习画像</h2>
                       <span className="accordion-icon">
@@ -609,7 +628,11 @@ export default function JourneyPage() {
                     >
                       <div
                         className="accordion-header"
-                        onClick={() => setActiveSidebarCard("plan")}
+                        onClick={() =>
+                          setActiveSidebarCard(
+                            activeSidebarCard === "plan" ? null : "plan",
+                          )
+                        }
                       >
                         <h2 className="card-title">您的专属学习计划</h2>
                         <span className="accordion-icon">
@@ -655,7 +678,11 @@ export default function JourneyPage() {
                   >
                     <div
                       className="accordion-header"
-                      onClick={() => setActiveSidebarCard("history")}
+                      onClick={() =>
+                        setActiveSidebarCard(
+                          activeSidebarCard === "history" ? null : "history",
+                        )
+                      }
                     >
                       <h2 className="card-title">历史对话记录</h2>
                       <span className="accordion-icon">
@@ -748,6 +775,14 @@ export default function JourneyPage() {
                         我的快照
                       </div>
                       <div className="menu-item">帮助与反馈</div>
+                      <div className="menu-item" onClick={cycleTheme}>
+                        主题风格：
+                        {theme === "newyear"
+                          ? "新年"
+                          : theme === "light"
+                            ? "浅色"
+                            : "深色"}
+                      </div>
                       <div className="menu-item logout" onClick={handleLogout}>
                         退出登录
                       </div>

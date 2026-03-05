@@ -9,21 +9,7 @@
   box-sizing: border-box;
 }
 
-:root {
-  --color-bg-warm: #fff9f9;
-  --color-bg-cream: #fff5f5;
-  --color-bg-ivory: #fff0f0;
-  --color-primary: #d9434e;
-  --color-primary-light: #ef4444;
-  --color-primary-glow: rgba(217, 67, 78, 0.1);
-  --color-accent: #b91c1c;
-  --color-text-primary: #2d0a0a;
-  --color-text-secondary: #4a1c1c;
-  --color-text-muted: #947171;
-  --color-border: rgba(217, 67, 78, 0.1);
-  --color-card: #ffffff;
-  --radius-card: 24px;
-}
+/* 变量来自全局 themes.css（html[data-theme]） */
 
 html,
 body {

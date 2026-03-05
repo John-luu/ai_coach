@@ -1,0 +1,14 @@
+**/node_modules/
+react-frontend/node_modules/
+react-frontend/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+go-backend/ai_course
+go-backend/ai_course.exe
+*.log
+output.log
+.env
+.env.local
+.DS_Store
+Thumbs.db

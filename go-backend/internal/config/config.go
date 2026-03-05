@@ -23,7 +23,7 @@ func Load() *Config {
 		DBUser:     getEnv("AI_COACH_DB_USER", "root"),
 		DBPass:     getEnv("AI_COACH_DB_PASS", "123456"),
 		AIBaseURL:  getEnv("AI_COACH_AI_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
-		AIKey:      getEnv("AI_COACH_AI_KEY", "sk-9915ab699b7f46ccbecdea96cdd6c342"),
+		AIKey:      getEnv("AI_COACH_AI_KEY", ""),
 		AIModel:    getEnv("AI_COACH_AI_MODEL", "qwen-plus"),
 		JWTSecret:  getEnv("AI_COACH_JWT_SECRET", "ai-coach-jwt-secret-key-2024-strong-password"),
 		JWTExpirationMillis: 10800000, // 3 hours (3 * 3600 * 1000)
